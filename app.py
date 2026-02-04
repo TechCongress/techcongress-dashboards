@@ -346,43 +346,44 @@ def show_fellow_card(fellow):
     needs_checkin = days_since_checkin > 30 and fellow["status"] == "on-track"
     days_until_end = calculate_days_until(fellow["end_date"])
 
-    # Status badge colors - green for active, yellow for flagged, orange for ending soon
+    # Status badge colors
     status_colors = {
-        "on-track": ("#22c55e", "#ffffff"),      # green bg, white text
-        "flagged": ("#eab308", "#ffffff"),        # yellow bg, white text
-        "ending-soon": ("#f97316", "#ffffff")     # orange bg, white text
+        "on-track": ("#22c55e", "#ffffff"),
+        "flagged": ("#eab308", "#ffffff"),
+        "ending-soon": ("#ef4444", "#ffffff")
     }
     status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
     bg_color, text_color = status_colors.get(fellow["status"], ("#6b7280", "#ffffff"))
 
-    # Fellow type badge colors
+    # Fellow type badge
+    type_label = ""
+    type_bg = ""
     if fellow["fellow_type"]:
         type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
         type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#64748b"
-    else:
-        type_label = ""
-        type_bg = ""
 
-    # Build the card HTML
-    card_html = f'''
-    <div style="background-color: white; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid #e5e7eb; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">{fellow['name']}</div>
-        <div style="color: #6b7280; font-size: 0.875rem; margin-bottom: 0.75rem;">Cohort: {fellow['cohort']}</div>
+    # Build parts separately
+    checkin_badge = ""
+    if needs_checkin:
+        checkin_badge = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#eab308;color:#ffffff;margin-left:0.25rem;">Needs Check-in</span>'
 
-        <div style="margin-bottom: 0.5rem;">
-            <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: {bg_color}; color: {text_color};">{status_label}</span>
-            {f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #eab308; color: #ffffff; margin-left: 0.25rem;">Needs Check-in</span>' if needs_checkin else ''}
-        </div>
+    type_html = ""
+    if type_label:
+        type_html = f'<div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{type_bg};color:white;">{type_label}</span></div>'
 
-        {f'<div style="margin-bottom: 0.5rem;"><span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: {type_bg}; color: white;">{type_label}</span></div>' if type_label else ''}
+    office_html = ""
+    if fellow["office"]:
+        office_html = f'<div style="color:#374151;font-size:0.875rem;margin-bottom:0.25rem;">{fellow["office"]}</div>'
 
-        {f'<div style="color: #374151; font-size: 0.875rem; margin-bottom: 0.25rem;">{fellow["office"]}</div>' if fellow["office"] else ''}
+    term_html = ""
+    if fellow["start_date"] and fellow["end_date"]:
+        term_html = f'<div style="color:#6b7280;font-size:0.8rem;margin-bottom:0.25rem;">Fellowship Term: {fellow["start_date"]} - {fellow["end_date"]}</div>'
 
-        {f'<div style="color: #6b7280; font-size: 0.8rem; margin-bottom: 0.25rem;">Fellowship Term: {fellow["start_date"]} - {fellow["end_date"]}</div>' if fellow["start_date"] and fellow["end_date"] else ''}
+    checkin_html = ""
+    if fellow["last_check_in"]:
+        checkin_html = f'<div style="color:#6b7280;font-size:0.8rem;">Last check-in: {fellow["last_check_in"]}</div>'
 
-        {f'<div style="color: #6b7280; font-size: 0.8rem;">Last check-in: {fellow["last_check_in"]}</div>' if fellow["last_check_in"] else ''}
-    </div>
-    '''
+    card_html = f'<div style="background-color:white;padding:1.25rem;border-radius:0.75rem;border:1px solid #e5e7eb;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div style="font-weight:600;font-size:1.1rem;margin-bottom:0.25rem;">{fellow["name"]}</div><div style="color:#6b7280;font-size:0.875rem;margin-bottom:0.75rem;">Cohort: {fellow["cohort"]}</div><div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}</div>{type_html}{office_html}{term_html}{checkin_html}</div>'
 
     st.markdown(card_html, unsafe_allow_html=True)
 
