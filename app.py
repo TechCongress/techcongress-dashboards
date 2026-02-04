@@ -79,7 +79,7 @@ def create_fellow(fellow_data):
         "Start Date": fellow_data.get("start_date"),
         "End Date": fellow_data.get("end_date"),
         "Cohort": fellow_data.get("cohort"),
-        "Status": fellow_data.get("status", "on-track"),
+        "Status": fellow_data.get("status", "Active"),
         "Last Check-In": fellow_data.get("last_check_in"),
         "Prior Role": fellow_data.get("prior_role"),
         "Education": fellow_data.get("education"),
@@ -113,7 +113,7 @@ def update_fellow(record_id, fellow_data):
         "Start Date": fellow_data.get("start_date"),
         "End Date": fellow_data.get("end_date"),
         "Cohort": fellow_data.get("cohort"),
-        "Status": fellow_data.get("status", "on-track"),
+        "Status": fellow_data.get("status", "Active"),
         "Last Check-In": fellow_data.get("last_check_in"),
         "Prior Role": fellow_data.get("prior_role"),
         "Education": fellow_data.get("education"),
@@ -521,8 +521,8 @@ def show_fellow_form():
             )
             status = st.selectbox(
                 "Status",
-                ["on-track", "flagged", "ending-soon"],
-                index=["on-track", "flagged", "ending-soon"].index(fellow.get("status", "on-track")) if fellow.get("status", "on-track") in ["on-track", "flagged", "ending-soon"] else 0
+                ["Active", "Flagged", "Ending Soon"],
+                index=["Active", "Flagged", "Ending Soon"].index(fellow.get("status", "Active")) if fellow.get("status", "Active") in ["Active", "Flagged", "Ending Soon"] else 0
             )
 
         office = st.text_input("Office", value=fellow.get("office", ""), placeholder="e.g., Sen. Maria Cantwell (D-WA)")
