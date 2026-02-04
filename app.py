@@ -191,9 +191,9 @@ st.markdown("""
         font-size: 0.75rem;
         font-weight: 500;
     }
-    .status-on-track { background: #dcfce7; color: #166534; }
-    .status-flagged { background: #fee2e2; color: #991b1b; }
-    .status-ending-soon { background: #ffedd5; color: #9a3412; }
+    .status-on-track { background: #dcfce7; color: #166534; border-radius: 9999px; }
+    .status-flagged { background: #fef9c3; color: #854d0e; border-radius: 9999px; }
+    .status-ending-soon { background: #ffedd5; color: #9a3412; border-radius: 9999px; }
     .party-democrat { background: #dbeafe; color: #1d4ed8; }
     .party-republican { background: #fee2e2; color: #dc2626; }
     .party-independent { background: #f3e8ff; color: #7c3aed; }
@@ -256,7 +256,7 @@ def main():
     with col1:
         st.metric("Total Fellows", total, help="Currently placed")
     with col2:
-        st.metric("On Track", on_track, help="No issues")
+        st.metric("Active", on_track, help="No issues")
     with col3:
         st.metric("Needs Check-in", needs_checkin, help="30+ days since contact")
     with col4:
@@ -354,17 +354,17 @@ def show_fellow_card(fellow):
     }.get(fellow["status"], "#e5e7eb")
 
     with st.container(border=True):
-        # Colored status indicator at top
-        st.markdown(f'<div style="height: 4px; background-color: {border_color}; margin: -1rem -1rem 1rem -1rem; border-radius: 0.5rem 0.5rem 0 0;"></div>', unsafe_allow_html=True)
+        # White background and colored status indicator at top
+        st.markdown(f'<div style="background-color: white; margin: -1rem; padding: 1rem; border-radius: 0.5rem;"><div style="height: 4px; background-color: {border_color}; margin: -1rem -1rem 1rem -1rem; border-radius: 0.5rem 0.5rem 0 0;"></div>', unsafe_allow_html=True)
 
         # Name and cohort
         st.markdown(f"**{fellow['name']}**")
         if fellow["cohort"]:
-            st.caption(f"Cohort {fellow['cohort']}")
+            st.caption(f"Cohort: {fellow['cohort']}")
 
         # Status badge
         status_class = f"status-{fellow['status']}"
-        status_label = {"on-track": "On Track", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
+        status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
         st.markdown(f'<span class="status-badge {status_class}">{status_label}</span>', unsafe_allow_html=True)
 
         if needs_checkin:
@@ -385,7 +385,7 @@ def show_fellow_card(fellow):
 
         # Dates
         if fellow["start_date"] and fellow["end_date"]:
-            st.caption(f"{fellow['start_date']} - {fellow['end_date']}")
+            st.caption(f"Fellowship Term: {fellow['start_date']} - {fellow['end_date']}")
             if 0 < days_until_end <= 90:
                 st.caption(f"{days_until_end} days left")
 
@@ -410,6 +410,9 @@ def show_fellow_card(fellow):
                 st.session_state.show_add_form = False
                 st.rerun()
 
+        # Close the white background div
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
 def show_fellow_details():
     """Show detailed view of a fellow"""
@@ -428,10 +431,10 @@ def show_fellow_details():
         st.markdown(f"## {fellow['name']}")
 
         if fellow["cohort"]:
-            st.caption(f"Cohort {fellow['cohort']}")
+            st.caption(f"Cohort: {fellow['cohort']}")
 
         # Status
-        status_label = {"on-track": "On Track", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
+        status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
         st.markdown(f"**Status:** {status_label}")
 
         if fellow["fellow_type"]:
