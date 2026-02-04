@@ -362,26 +362,36 @@ def show_fellow_card(fellow):
         if fellow["cohort"]:
             st.caption(f"Cohort: {fellow['cohort']}")
 
-        # Status badge
-        status_class = f"status-{fellow['status']}"
+        # Status badge with inline styles
+        status_styles = {
+            "on-track": "background-color: #dcfce7; color: #166534;",
+            "flagged": "background-color: #fef9c3; color: #854d0e;",
+            "ending-soon": "background-color: #ffedd5; color: #9a3412;"
+        }
         status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
-        st.markdown(f'<span class="status-badge {status_class}">{status_label}</span>', unsafe_allow_html=True)
+        status_style = status_styles.get(fellow["status"], "background-color: #f1f5f9; color: #475569;")
+        st.markdown(f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; {status_style}">{status_label}</span>', unsafe_allow_html=True)
 
         if needs_checkin:
-            st.markdown('<span class="status-badge needs-checkin">Needs Check-in</span>', unsafe_allow_html=True)
+            st.markdown('<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fef9c3; color: #854d0e;">Needs Check-in</span>', unsafe_allow_html=True)
 
-        # Fellow type badge
+        # Fellow type badge with inline styles
         if fellow["fellow_type"]:
-            type_class = "fellow-type-senior" if "Senior" in fellow["fellow_type"] else "fellow-type-cif"
             type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
-            st.markdown(f'<span class="status-badge {type_class}">{type_label}</span>', unsafe_allow_html=True)
+            type_style = "background-color: #e0e7ff; color: #4338ca;" if "Senior" in fellow["fellow_type"] else "background-color: #f1f5f9; color: #475569;"
+            st.markdown(f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; {type_style}">{type_label}</span>', unsafe_allow_html=True)
 
         # Office and party
         if fellow["office"]:
-            party_class = f"party-{fellow['party'].lower()}" if fellow["party"] else ""
             st.markdown(f"{fellow['office']}")
             if fellow["party"]:
-                st.markdown(f'<span class="status-badge {party_class}">{fellow["party"]}</span>', unsafe_allow_html=True)
+                party_styles = {
+                    "Democrat": "background-color: #dbeafe; color: #1d4ed8;",
+                    "Republican": "background-color: #fee2e2; color: #dc2626;",
+                    "Independent": "background-color: #f3e8ff; color: #7c3aed;"
+                }
+                party_style = party_styles.get(fellow["party"], "background-color: #f1f5f9; color: #475569;")
+                st.markdown(f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; {party_style}">{fellow["party"]}</span>', unsafe_allow_html=True)
 
         # Dates
         if fellow["start_date"] and fellow["end_date"]:
