@@ -49,7 +49,7 @@ def fetch_fellows():
             "start_date": fields.get("Start Date", ""),
             "end_date": fields.get("End Date", ""),
             "cohort": fields.get("Cohort", ""),
-            "status": fields.get("Status", "on-track"),
+            "status": fields.get("Status", "Active"),
             "last_check_in": fields.get("Last Check-In", ""),
             "prior_role": fields.get("Prior Role", ""),
             "education": fields.get("Education", ""),
@@ -248,10 +248,10 @@ def main():
 
     # Calculate stats
     total = len(fellows)
-    on_track = len([f for f in fellows if f["status"] == "on-track"])
-    flagged = len([f for f in fellows if f["status"] == "flagged"])
-    ending_soon = len([f for f in fellows if f["status"] == "ending-soon"])
-    needs_checkin = len([f for f in fellows if calculate_days_since(f["last_check_in"]) > 30 and f["status"] == "on-track"])
+    on_track = len([f for f in fellows if f["status"] in ["on-track", "Active"]])
+    flagged = len([f for f in fellows if f["status"] in ["flagged", "Flagged"]])
+    ending_soon = len([f for f in fellows if f["status"] in ["ending-soon", "Ending Soon"]])
+    needs_checkin = len([f for f in fellows if calculate_days_since(f["last_check_in"]) > 30 and f["status"] in ["on-track", "Active"]])
 
     # Stats row
     st.markdown("---")
@@ -277,7 +277,7 @@ def main():
         with col1:
             search = st.text_input("Search", placeholder="Name or office...")
         with col2:
-            status_options = ["All Statuses", "on-track", "flagged", "ending-soon"]
+            status_options = ["All Statuses", "Active", "Flagged", "Ending Soon"]
             status_filter = st.selectbox("Status", status_options)
         with col3:
             fellow_type_options = ["All Types", "Senior Congressional Innovation Fellow", "Congressional Innovation Fellow"]
@@ -320,7 +320,7 @@ def main():
 
     # Sort: flagged first, then ending-soon, then by days since check-in
     def sort_key(f):
-        status_priority = {"flagged": 0, "ending-soon": 1, "on-track": 2}.get(f["status"], 3)
+        status_priority = {"flagged": 0, "Flagged": 0, "ending-soon": 1, "Ending Soon": 1, "on-track": 2, "Active": 2}.get(f["status"], 3)
         days_since = calculate_days_since(f["last_check_in"])
         return (status_priority, -days_since)
 
@@ -347,7 +347,7 @@ def main():
 def show_fellow_card(fellow):
     """Display a fellow card"""
     days_since_checkin = calculate_days_since(fellow["last_check_in"])
-    needs_checkin = days_since_checkin > 30 and fellow["status"] == "on-track"
+    needs_checkin = days_since_checkin > 30 and fellow["status"] in ["on-track", "Active"]
     days_until_end = calculate_days_until(fellow["end_date"])
 
     # Status badge colors - handle both Airtable values and internal values
