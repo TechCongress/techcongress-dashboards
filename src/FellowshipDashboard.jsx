@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search, Filter, AlertTriangle, Clock, CheckCircle, User, Calendar,
   ChevronDown, Bell, Users, Building2, Mail, Phone, Linkedin,
-  ExternalLink, Edit, Loader2
+  ExternalLink, Edit, Loader2, X, Save, Plus
 } from 'lucide-react';
 
 // ============ AIRTABLE CONFIG ============
@@ -28,7 +28,7 @@ const fellowTypeConfig = {
   'Congressional Innovation Fellow': { label: 'CIF', color: 'bg-slate-100 text-slate-700' }
 };
 
-// ============ AIRTABLE FETCH ============
+// ============ AIRTABLE FUNCTIONS ============
 async function fetchFellowsFromAirtable() {
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
 
@@ -45,7 +45,6 @@ async function fetchFellowsFromAirtable() {
 
   const data = await response.json();
 
-  // Map Airtable records to our format
   return data.records.map(record => ({
     id: record.id,
     name: record.fields['Name'] || '',
@@ -65,6 +64,92 @@ async function fetchFellowsFromAirtable() {
     education: record.fields['Education'] || '',
     notes: record.fields['Notes'] || ''
   }));
+}
+
+async function createFellowInAirtable(fellowData) {
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+
+  const fields = {
+    'Name': fellowData.name,
+    'Email': fellowData.email,
+    'Phone': fellowData.phone,
+    'Fellow Type': fellowData.fellowType,
+    'Party': fellowData.party,
+    'Office': fellowData.office,
+    'Chamber': fellowData.chamber,
+    'LinkedIn': fellowData.linkedin,
+    'Start Date': fellowData.startDate,
+    'End Date': fellowData.endDate,
+    'Cohort': fellowData.cohort,
+    'Status': fellowData.status || 'on-track',
+    'Last Check-In': fellowData.lastCheckIn,
+    'Prior Role': fellowData.priorRole,
+    'Education': fellowData.education,
+    'Notes': fellowData.notes
+  };
+
+  // Remove empty fields
+  Object.keys(fields).forEach(key => {
+    if (!fields[key]) delete fields[key];
+  });
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ fields })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create fellow: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+async function updateFellowInAirtable(recordId, fellowData) {
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}/${recordId}`;
+
+  const fields = {
+    'Name': fellowData.name,
+    'Email': fellowData.email,
+    'Phone': fellowData.phone,
+    'Fellow Type': fellowData.fellowType,
+    'Party': fellowData.party,
+    'Office': fellowData.office,
+    'Chamber': fellowData.chamber,
+    'LinkedIn': fellowData.linkedin,
+    'Start Date': fellowData.startDate,
+    'End Date': fellowData.endDate,
+    'Cohort': fellowData.cohort,
+    'Status': fellowData.status || 'on-track',
+    'Last Check-In': fellowData.lastCheckIn,
+    'Prior Role': fellowData.priorRole,
+    'Education': fellowData.education,
+    'Notes': fellowData.notes
+  };
+
+  // Remove empty fields
+  Object.keys(fields).forEach(key => {
+    if (!fields[key]) delete fields[key];
+  });
+
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ fields })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update fellow: ${response.status}`);
+  }
+
+  return await response.json();
 }
 
 // ============ COMPONENTS ============
@@ -200,7 +285,299 @@ function FellowCard({ fellow, onClick }) {
   );
 }
 
-function FellowModal({ fellow, onClose }) {
+function FellowFormModal({ fellow, onClose, onSave, isNew }) {
+  const [formData, setFormData] = useState({
+    name: fellow?.name || '',
+    email: fellow?.email || '',
+    phone: fellow?.phone || '',
+    fellowType: fellow?.fellowType || '',
+    party: fellow?.party || '',
+    office: fellow?.office || '',
+    chamber: fellow?.chamber || '',
+    linkedin: fellow?.linkedin || '',
+    startDate: fellow?.startDate || '',
+    endDate: fellow?.endDate || '',
+    cohort: fellow?.cohort || '',
+    status: fellow?.status || 'on-track',
+    lastCheckIn: fellow?.lastCheckIn || '',
+    priorRole: fellow?.priorRole || '',
+    education: fellow?.education || '',
+    notes: fellow?.notes || ''
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+
+    try {
+      await onSave(formData, fellow?.id);
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">
+              {isNew ? 'Add New Fellow' : 'Edit Fellow'}
+            </h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {error && (
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
+              <input
+                type="url"
+                name="linkedin"
+                value={formData.linkedin}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Fellowship Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fellow Type</label>
+              <select
+                name="fellowType"
+                value={formData.fellowType}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">Select type...</option>
+                <option value="Congressional Innovation Fellow">Congressional Innovation Fellow</option>
+                <option value="Senior Congressional Innovation Fellow">Senior Congressional Innovation Fellow</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Party</label>
+              <select
+                name="party"
+                value={formData.party}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">Select party...</option>
+                <option value="Democrat">Democrat</option>
+                <option value="Republican">Republican</option>
+                <option value="Independent">Independent</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Office</label>
+              <input
+                type="text"
+                name="office"
+                value={formData.office}
+                onChange={handleChange}
+                placeholder="e.g., Sen. Maria Cantwell (D-WA)"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Chamber</label>
+              <select
+                name="chamber"
+                value={formData.chamber}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">Select chamber...</option>
+                <option value="Senate">Senate</option>
+                <option value="House">House</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cohort</label>
+              <input
+                type="text"
+                name="cohort"
+                value={formData.cohort}
+                onChange={handleChange}
+                placeholder="e.g., 2025"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="on-track">On Track</option>
+                <option value="flagged">Flagged</option>
+                <option value="ending-soon">Ending Soon</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <input
+                type="date"
+                name="startDate"
+                value={formData.startDate}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <input
+                type="date"
+                name="endDate"
+                value={formData.endDate}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Check-In</label>
+              <input
+                type="date"
+                name="lastCheckIn"
+                value={formData.lastCheckIn}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Background */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prior Role</label>
+              <input
+                type="text"
+                name="priorRole"
+                value={formData.priorRole}
+                onChange={handleChange}
+                placeholder="e.g., ML Engineer at Google"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Education</label>
+              <input
+                type="text"
+                name="education"
+                value={formData.education}
+                onChange={handleChange}
+                placeholder="e.g., PhD Computer Science, Stanford"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  {isNew ? 'Add Fellow' : 'Save Changes'}
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function FellowModal({ fellow, onClose, onEdit }) {
   if (!fellow) return null;
 
   const duration = fellow.startDate && fellow.endDate
@@ -316,11 +693,10 @@ function FellowModal({ fellow, onClose }) {
           )}
 
           <div className="flex gap-3 pt-4 border-t border-gray-100">
-            <button className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Schedule Check-in
-            </button>
-            <button className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center justify-center gap-2">
+            <button
+              onClick={() => onEdit(fellow)}
+              className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+            >
               <Edit className="w-4 h-4" />
               Edit Fellow
             </button>
@@ -372,6 +748,10 @@ export default function FellowshipDashboard() {
   const [selectedFellow, setSelectedFellow] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Modal states
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingFellow, setEditingFellow] = useState(null);
+
   // Fetch data from Airtable
   const loadFellows = async () => {
     setLoading(true);
@@ -389,6 +769,23 @@ export default function FellowshipDashboard() {
   useEffect(() => {
     loadFellows();
   }, []);
+
+  // Handle save (create or update)
+  const handleSaveFellow = async (formData, existingId) => {
+    if (existingId) {
+      await updateFellowInAirtable(existingId, formData);
+    } else {
+      await createFellowInAirtable(formData);
+    }
+    // Reload data after save
+    await loadFellows();
+  };
+
+  // Handle edit button click
+  const handleEditClick = (fellow) => {
+    setSelectedFellow(null);
+    setEditingFellow(fellow);
+  };
 
   // Get unique cohorts from data
   const allCohorts = useMemo(() => {
@@ -410,12 +807,10 @@ export default function FellowshipDashboard() {
         return matchesSearch && matchesStatus && matchesCohort && matchesChamber && matchesParty && matchesFellowType;
       })
       .sort((a, b) => {
-        // Sort by status priority, then by needs check-in
         const aPriority = statusConfig[a.status]?.priority ?? 99;
         const bPriority = statusConfig[b.status]?.priority ?? 99;
         if (aPriority !== bPriority) return aPriority - bPriority;
 
-        // Secondary sort: needs check-in
         const aDaysSince = a.lastCheckIn ? Math.ceil((new Date() - new Date(a.lastCheckIn)) / (1000 * 60 * 60 * 24)) : 999;
         const bDaysSince = b.lastCheckIn ? Math.ceil((new Date() - new Date(b.lastCheckIn)) / (1000 * 60 * 60 * 24)) : 999;
         return bDaysSince - aDaysSince;
@@ -462,8 +857,11 @@ export default function FellowshipDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">TechCongress Fellows Dashboard</h1>
               <p className="text-sm text-gray-500">Monitor and manage current fellow placements</p>
             </div>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2">
-              <User className="w-4 h-4" />
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
               Add Fellow
             </button>
           </div>
@@ -565,8 +963,31 @@ export default function FellowshipDashboard() {
         )}
       </main>
 
-      {/* Fellow Detail Modal */}
-      <FellowModal fellow={selectedFellow} onClose={() => setSelectedFellow(null)} />
+      {/* View Fellow Modal */}
+      <FellowModal
+        fellow={selectedFellow}
+        onClose={() => setSelectedFellow(null)}
+        onEdit={handleEditClick}
+      />
+
+      {/* Add Fellow Modal */}
+      {showAddModal && (
+        <FellowFormModal
+          isNew={true}
+          onClose={() => setShowAddModal(false)}
+          onSave={handleSaveFellow}
+        />
+      )}
+
+      {/* Edit Fellow Modal */}
+      {editingFellow && (
+        <FellowFormModal
+          fellow={editingFellow}
+          isNew={false}
+          onClose={() => setEditingFellow(null)}
+          onSave={handleSaveFellow}
+        />
+      )}
     </div>
   );
 }
