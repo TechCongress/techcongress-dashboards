@@ -346,82 +346,57 @@ def show_fellow_card(fellow):
     needs_checkin = days_since_checkin > 30 and fellow["status"] == "on-track"
     days_until_end = calculate_days_until(fellow["end_date"])
 
-    # Status colors for left border
-    border_color = {
-        "flagged": "#ef4444",
-        "ending-soon": "#f97316",
-        "on-track": "#22c55e" if not needs_checkin else "#eab308"
-    }.get(fellow["status"], "#e5e7eb")
+    # Status badge colors - green for active, yellow for flagged, orange for ending soon
+    status_colors = {
+        "on-track": ("#22c55e", "#ffffff"),      # green bg, white text
+        "flagged": ("#eab308", "#ffffff"),        # yellow bg, white text
+        "ending-soon": ("#f97316", "#ffffff")     # orange bg, white text
+    }
+    status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
+    bg_color, text_color = status_colors.get(fellow["status"], ("#6b7280", "#ffffff"))
 
-    with st.container(border=True):
-        # White background and colored status indicator at top
-        st.markdown(f'<div style="background-color: white; margin: -1rem; padding: 1rem; border-radius: 0.5rem;"><div style="height: 4px; background-color: {border_color}; margin: -1rem -1rem 1rem -1rem; border-radius: 0.5rem 0.5rem 0 0;"></div>', unsafe_allow_html=True)
+    # Fellow type badge colors
+    if fellow["fellow_type"]:
+        type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
+        type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#64748b"
+    else:
+        type_label = ""
+        type_bg = ""
 
-        # Name and cohort
-        st.markdown(f"**{fellow['name']}**")
-        if fellow["cohort"]:
-            st.caption(f"Cohort: {fellow['cohort']}")
+    # Build the card HTML
+    card_html = f'''
+    <div style="background-color: white; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid #e5e7eb; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">{fellow['name']}</div>
+        <div style="color: #6b7280; font-size: 0.875rem; margin-bottom: 0.75rem;">Cohort: {fellow['cohort']}</div>
 
-        # Status badge with inline styles
-        status_styles = {
-            "on-track": "background-color: #dcfce7; color: #166534;",
-            "flagged": "background-color: #fef9c3; color: #854d0e;",
-            "ending-soon": "background-color: #ffedd5; color: #9a3412;"
-        }
-        status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
-        status_style = status_styles.get(fellow["status"], "background-color: #f1f5f9; color: #475569;")
-        st.markdown(f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; {status_style}">{status_label}</span>', unsafe_allow_html=True)
+        <div style="margin-bottom: 0.5rem;">
+            <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: {bg_color}; color: {text_color};">{status_label}</span>
+            {f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #eab308; color: #ffffff; margin-left: 0.25rem;">Needs Check-in</span>' if needs_checkin else ''}
+        </div>
 
-        if needs_checkin:
-            st.markdown('<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fef9c3; color: #854d0e;">Needs Check-in</span>', unsafe_allow_html=True)
+        {f'<div style="margin-bottom: 0.5rem;"><span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: {type_bg}; color: white;">{type_label}</span></div>' if type_label else ''}
 
-        # Fellow type badge with inline styles
-        if fellow["fellow_type"]:
-            type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
-            type_style = "background-color: #e0e7ff; color: #4338ca;" if "Senior" in fellow["fellow_type"] else "background-color: #f1f5f9; color: #475569;"
-            st.markdown(f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; {type_style}">{type_label}</span>', unsafe_allow_html=True)
+        {f'<div style="color: #374151; font-size: 0.875rem; margin-bottom: 0.25rem;">{fellow["office"]}</div>' if fellow["office"] else ''}
 
-        # Office and party
-        if fellow["office"]:
-            st.markdown(f"{fellow['office']}")
-            if fellow["party"]:
-                party_styles = {
-                    "Democrat": "background-color: #dbeafe; color: #1d4ed8;",
-                    "Republican": "background-color: #fee2e2; color: #dc2626;",
-                    "Independent": "background-color: #f3e8ff; color: #7c3aed;"
-                }
-                party_style = party_styles.get(fellow["party"], "background-color: #f1f5f9; color: #475569;")
-                st.markdown(f'<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; {party_style}">{fellow["party"]}</span>', unsafe_allow_html=True)
+        {f'<div style="color: #6b7280; font-size: 0.8rem; margin-bottom: 0.25rem;">Fellowship Term: {fellow["start_date"]} - {fellow["end_date"]}</div>' if fellow["start_date"] and fellow["end_date"] else ''}
 
-        # Dates
-        if fellow["start_date"] and fellow["end_date"]:
-            st.caption(f"Fellowship Term: {fellow['start_date']} - {fellow['end_date']}")
-            if 0 < days_until_end <= 90:
-                st.caption(f"{days_until_end} days left")
+        {f'<div style="color: #6b7280; font-size: 0.8rem;">Last check-in: {fellow["last_check_in"]}</div>' if fellow["last_check_in"] else ''}
+    </div>
+    '''
 
-        # Last check-in
-        if fellow["last_check_in"]:
-            checkin_warning = f" ({days_since_checkin} days ago)" if needs_checkin else ""
-            st.caption(f"Last check-in: {fellow['last_check_in']}{checkin_warning}")
+    st.markdown(card_html, unsafe_allow_html=True)
 
-        # Notes preview
-        if fellow["notes"]:
-            st.caption(f'"{fellow["notes"][:100]}..."' if len(fellow["notes"]) > 100 else f'"{fellow["notes"]}"')
-
-        # Action buttons (no emojis)
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
-                st.session_state.selected_fellow = fellow
-                st.rerun()
-        with col2:
-            if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
-                st.session_state.editing_fellow = fellow
-                st.session_state.show_add_form = False
-                st.rerun()
-
-        # Close the white background div
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Action buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
+            st.session_state.selected_fellow = fellow
+            st.rerun()
+    with col2:
+        if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
+            st.session_state.editing_fellow = fellow
+            st.session_state.show_add_form = False
+            st.rerun()
 
 
 def show_fellow_details():
