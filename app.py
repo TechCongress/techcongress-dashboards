@@ -348,9 +348,9 @@ def show_fellow_card(fellow):
 
     # Status badge colors
     status_colors = {
-        "on-track": ("#22c55e", "#ffffff"),
-        "flagged": ("#eab308", "#ffffff"),
-        "ending-soon": ("#ef4444", "#ffffff")
+        "on-track": ("#4ade80", "#166534"),
+        "flagged": ("#fde047", "#854d0e"),
+        "ending-soon": ("#f87171", "#991b1b")
     }
     status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
     bg_color, text_color = status_colors.get(fellow["status"], ("#6b7280", "#ffffff"))
@@ -358,9 +358,11 @@ def show_fellow_card(fellow):
     # Fellow type badge
     type_label = ""
     type_bg = ""
+    type_text = "#ffffff"
     if fellow["fellow_type"]:
         type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
-        type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#64748b"
+        type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#93c5fd"
+        type_text = "#ffffff" if "Senior" in fellow["fellow_type"] else "#1e40af"
 
     # Build parts separately
     checkin_badge = ""
@@ -369,7 +371,7 @@ def show_fellow_card(fellow):
 
     type_html = ""
     if type_label:
-        type_html = f'<div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{type_bg};color:white;">{type_label}</span></div>'
+        type_html = f'<div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{type_bg};color:{type_text};">{type_label}</span></div>'
 
     office_html = ""
     if fellow["office"]:
