@@ -224,10 +224,10 @@ def main():
     # Header
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.title("🏛️ TechCongress Fellows Dashboard")
+        st.title("TechCongress Fellows Dashboard")
         st.caption("Monitor and manage current fellow placements")
     with col2:
-        if st.button("➕ Add Fellow", type="primary", use_container_width=True):
+        if st.button("Add Fellow", type="primary", use_container_width=True):
             st.session_state.show_add_form = True
             st.session_state.editing_fellow = None
             st.rerun()
@@ -267,7 +267,7 @@ def main():
     st.markdown("---")
 
     # Filters
-    with st.expander("🔍 Filters", expanded=True):
+    with st.expander("Filters", expanded=True):
         col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
@@ -350,22 +350,17 @@ def show_fellow_card(fellow):
     border_color = {
         "flagged": "#ef4444",
         "ending-soon": "#f97316",
-        "on-track": "#e5e7eb" if not needs_checkin else "#eab308"
+        "on-track": "#22c55e" if not needs_checkin else "#eab308"
     }.get(fellow["status"], "#e5e7eb")
 
-    with st.container():
-        st.markdown(f"""
-        <div class="fellow-card" style="border-left: 4px solid {border_color};">
-        """, unsafe_allow_html=True)
+    with st.container(border=True):
+        # Colored status indicator at top
+        st.markdown(f'<div style="height: 4px; background-color: {border_color}; margin: -1rem -1rem 1rem -1rem; border-radius: 0.5rem 0.5rem 0 0;"></div>', unsafe_allow_html=True)
 
         # Name and cohort
-        initials = "".join([n[0] for n in fellow["name"].split()[:2]]) if fellow["name"] else "?"
-
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown(f"**{fellow['name']}**")
-            if fellow["cohort"]:
-                st.caption(f"Cohort {fellow['cohort']}")
+        st.markdown(f"**{fellow['name']}**")
+        if fellow["cohort"]:
+            st.caption(f"Cohort {fellow['cohort']}")
 
         # Status badge
         status_class = f"status-{fellow['status']}"
@@ -373,7 +368,7 @@ def show_fellow_card(fellow):
         st.markdown(f'<span class="status-badge {status_class}">{status_label}</span>', unsafe_allow_html=True)
 
         if needs_checkin:
-            st.markdown('<span class="status-badge needs-checkin">⏰ Needs Check-in</span>', unsafe_allow_html=True)
+            st.markdown('<span class="status-badge needs-checkin">Needs Check-in</span>', unsafe_allow_html=True)
 
         # Fellow type badge
         if fellow["fellow_type"]:
@@ -384,35 +379,33 @@ def show_fellow_card(fellow):
         # Office and party
         if fellow["office"]:
             party_class = f"party-{fellow['party'].lower()}" if fellow["party"] else ""
-            st.markdown(f"🏛️ {fellow['office']}")
+            st.markdown(f"{fellow['office']}")
             if fellow["party"]:
                 st.markdown(f'<span class="status-badge {party_class}">{fellow["party"]}</span>', unsafe_allow_html=True)
 
         # Dates
         if fellow["start_date"] and fellow["end_date"]:
-            st.caption(f"📅 {fellow['start_date']} - {fellow['end_date']}")
+            st.caption(f"{fellow['start_date']} - {fellow['end_date']}")
             if 0 < days_until_end <= 90:
-                st.caption(f"⚠️ {days_until_end} days left")
+                st.caption(f"{days_until_end} days left")
 
         # Last check-in
         if fellow["last_check_in"]:
             checkin_warning = f" ({days_since_checkin} days ago)" if needs_checkin else ""
-            st.caption(f"🕐 Last check-in: {fellow['last_check_in']}{checkin_warning}")
+            st.caption(f"Last check-in: {fellow['last_check_in']}{checkin_warning}")
 
         # Notes preview
         if fellow["notes"]:
-            st.caption(f'💬 "{fellow["notes"][:100]}..."' if len(fellow["notes"]) > 100 else f'💬 "{fellow["notes"]}"')
+            st.caption(f'"{fellow["notes"][:100]}..."' if len(fellow["notes"]) > 100 else f'"{fellow["notes"]}"')
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Action buttons
+        # Action buttons (no emojis)
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("👁️ View", key=f"view_{fellow['id']}", use_container_width=True):
+            if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
                 st.session_state.selected_fellow = fellow
                 st.rerun()
         with col2:
-            if st.button("✏️ Edit", key=f"edit_{fellow['id']}", use_container_width=True):
+            if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
                 st.session_state.editing_fellow = fellow
                 st.session_state.show_add_form = False
                 st.rerun()
@@ -425,21 +418,20 @@ def show_fellow_details():
     with st.sidebar:
         st.markdown("### Fellow Details")
 
-        if st.button("✖️ Close", use_container_width=True):
+        if st.button("Close", use_container_width=True):
             st.session_state.selected_fellow = None
             st.rerun()
 
         st.markdown("---")
 
         # Name and avatar
-        initials = "".join([n[0] for n in fellow["name"].split()[:2]]) if fellow["name"] else "?"
         st.markdown(f"## {fellow['name']}")
 
         if fellow["cohort"]:
             st.caption(f"Cohort {fellow['cohort']}")
 
         # Status
-        status_label = {"on-track": "✅ On Track", "flagged": "🚨 Flagged", "ending-soon": "⏰ Ending Soon"}.get(fellow["status"], fellow["status"])
+        status_label = {"on-track": "On Track", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
         st.markdown(f"**Status:** {status_label}")
 
         if fellow["fellow_type"]:
@@ -450,18 +442,18 @@ def show_fellow_details():
         # Contact info
         st.markdown("#### Contact")
         if fellow["email"]:
-            st.markdown(f"📧 [{fellow['email']}](mailto:{fellow['email']})")
+            st.markdown(f"[{fellow['email']}](mailto:{fellow['email']})")
         if fellow["phone"]:
-            st.markdown(f"📱 {fellow['phone']}")
+            st.markdown(f"{fellow['phone']}")
         if fellow["linkedin"]:
-            st.markdown(f"🔗 [LinkedIn]({fellow['linkedin']})")
+            st.markdown(f"[LinkedIn]({fellow['linkedin']})")
 
         st.markdown("---")
 
         # Placement
         st.markdown("#### Placement")
         if fellow["office"]:
-            st.markdown(f"🏛️ {fellow['office']}")
+            st.markdown(f"{fellow['office']}")
         if fellow["chamber"]:
             st.markdown(f"**Chamber:** {fellow['chamber']}")
         if fellow["party"]:
@@ -495,7 +487,7 @@ def show_fellow_details():
 
         st.markdown("---")
 
-        if st.button("✏️ Edit Fellow", use_container_width=True, type="primary"):
+        if st.button("Edit Fellow", use_container_width=True, type="primary"):
             st.session_state.editing_fellow = fellow
             st.session_state.selected_fellow = None
             st.rerun()
