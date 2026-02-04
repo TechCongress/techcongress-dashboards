@@ -346,11 +346,11 @@ def show_fellow_card(fellow):
     needs_checkin = days_since_checkin > 30 and fellow["status"] == "on-track"
     days_until_end = calculate_days_until(fellow["end_date"])
 
-    # Status badge colors - green for active, yellow for flagged, orange for ending soon
+    # Status badge colors - green for active, yellow for flagged, red for ending soon
     status_colors = {
         "on-track": ("#22c55e", "#ffffff"),      # green bg, white text
         "flagged": ("#eab308", "#ffffff"),        # yellow bg, white text
-        "ending-soon": ("#f97316", "#ffffff")     # orange bg, white text
+        "ending-soon": ("#ef4444", "#ffffff")     # red bg, white text
     }
     status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
     bg_color, text_color = status_colors.get(fellow["status"], ("#6b7280", "#ffffff"))
