@@ -1,170 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search, Filter, AlertTriangle, Clock, CheckCircle, User, Calendar,
   ChevronDown, Bell, Users, Building2, Mail, Phone, Linkedin,
-  ExternalLink, Edit
+  ExternalLink, Edit, Loader2
 } from 'lucide-react';
 
-// ============ SAMPLE DATA ============
-// This will be replaced with Airtable data
-const fellowsData = [
-  {
-    id: 1,
-    name: "Sarah Chen",
-    email: "schen@techcongress.io",
-    phone: "(415) 555-0101",
-    fellowType: "Congressional Innovation Fellow",
-    party: "Democrat",
-    office: "Sen. Maria Cantwell (D-WA)",
-    chamber: "Senate",
-    linkedin: "https://linkedin.com/in/sarahchen",
-    startDate: "2025-09-01",
-    endDate: "2026-08-31",
-    cohort: "2025",
-    status: "on-track",
-    lastCheckIn: "2026-01-15",
-    priorRole: "ML Engineer at Google",
-    education: "PhD Computer Science, Stanford",
-    notes: ""
-  },
-  {
-    id: 2,
-    name: "Marcus Johnson",
-    email: "mjohnson@techcongress.io",
-    phone: "(202) 555-0102",
-    fellowType: "Congressional Innovation Fellow",
-    party: "Democrat",
-    office: "Rep. Ro Khanna (D-CA)",
-    chamber: "House",
-    linkedin: "https://linkedin.com/in/marcusjohnson",
-    startDate: "2025-09-01",
-    endDate: "2026-08-31",
-    cohort: "2025",
-    status: "on-track",
-    lastCheckIn: "2025-12-01",
-    priorRole: "Security Researcher at MITRE",
-    education: "MS Cybersecurity, Georgia Tech",
-    notes: ""
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    email: "erodriguez@techcongress.io",
-    phone: "(650) 555-0103",
-    fellowType: "Senior Congressional Innovation Fellow",
-    party: "Democrat",
-    office: "Senate Commerce Committee",
-    chamber: "Senate",
-    linkedin: "https://linkedin.com/in/emilyrodriguez",
-    startDate: "2025-09-01",
-    endDate: "2026-08-31",
-    cohort: "2025",
-    status: "flagged",
-    lastCheckIn: "2026-01-20",
-    priorRole: "Policy Analyst at Meta",
-    education: "JD/MBA, Harvard",
-    notes: "Requested placement change discussion"
-  },
-  {
-    id: 4,
-    name: "David Park",
-    email: "dpark@techcongress.io",
-    phone: "(510) 555-0104",
-    fellowType: "Congressional Innovation Fellow",
-    party: "Republican",
-    office: "Rep. Jay Obernolte (R-CA)",
-    chamber: "House",
-    linkedin: "https://linkedin.com/in/davidpark",
-    startDate: "2025-01-01",
-    endDate: "2026-06-30",
-    cohort: "2025",
-    status: "ending-soon",
-    lastCheckIn: "2026-01-25",
-    priorRole: "Quantum Computing Researcher at IBM",
-    education: "PhD Physics, Caltech",
-    notes: "Exploring extension options"
-  },
-  {
-    id: 5,
-    name: "Aisha Patel",
-    email: "apatel@techcongress.io",
-    phone: "(312) 555-0105",
-    fellowType: "Congressional Innovation Fellow",
-    party: "Democrat",
-    office: "House Energy & Commerce Committee",
-    chamber: "House",
-    linkedin: "https://linkedin.com/in/aishapatel",
-    startDate: "2025-09-01",
-    endDate: "2026-08-31",
-    cohort: "2025",
-    status: "on-track",
-    lastCheckIn: "2026-01-28",
-    priorRole: "Product Manager at Apple",
-    education: "MS HCI, Carnegie Mellon",
-    notes: ""
-  },
-  {
-    id: 6,
-    name: "James Wilson",
-    email: "jwilson@techcongress.io",
-    phone: "(703) 555-0106",
-    fellowType: "Senior Congressional Innovation Fellow",
-    party: "Republican",
-    office: "Sen. Todd Young (R-IN)",
-    chamber: "Senate",
-    linkedin: "https://linkedin.com/in/jameswilson",
-    startDate: "2025-09-01",
-    endDate: "2026-08-31",
-    cohort: "2025",
-    status: "on-track",
-    lastCheckIn: "2026-01-22",
-    priorRole: "NSA Cybersecurity Analyst",
-    education: "MS Computer Science, MIT",
-    notes: ""
-  },
-  {
-    id: 7,
-    name: "Michael Torres",
-    email: "mtorres@techcongress.io",
-    phone: "(206) 555-0108",
-    fellowType: "Congressional Innovation Fellow",
-    party: "Democrat",
-    office: "Rep. Suzan DelBene (D-WA)",
-    chamber: "House",
-    linkedin: "https://linkedin.com/in/michaeltorres",
-    startDate: "2025-09-01",
-    endDate: "2026-08-31",
-    cohort: "2025",
-    status: "on-track",
-    lastCheckIn: "2025-12-10",
-    priorRole: "Trade Policy Analyst at USTR",
-    education: "MPP, Georgetown",
-    notes: ""
-  },
-  {
-    id: 8,
-    name: "Rachel Kim",
-    email: "rkim@techcongress.io",
-    phone: "(617) 555-0109",
-    fellowType: "Congressional Innovation Fellow",
-    party: "Democrat",
-    office: "House Science Committee",
-    chamber: "House",
-    linkedin: "https://linkedin.com/in/rachelkim",
-    startDate: "2025-09-01",
-    endDate: "2026-08-31",
-    cohort: "2025",
-    status: "on-track",
-    lastCheckIn: "2026-01-30",
-    priorRole: "Research Scientist at OpenAI",
-    education: "PhD AI, UC Berkeley",
-    notes: ""
-  }
-];
+// ============ AIRTABLE CONFIG ============
+const AIRTABLE_API_KEY = import.meta.env.VITE_AIRTABLE_API_KEY;
+const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID;
+const AIRTABLE_TABLE_NAME = import.meta.env.VITE_AIRTABLE_TABLE_NAME || 'Fellows';
 
 // ============ CONFIG ============
-const allCohorts = [...new Set(fellowsData.map(f => f.cohort))].sort((a, b) => b.localeCompare(a));
-
 const statusConfig = {
   'on-track': { label: 'On Track', color: 'bg-green-100 text-green-800', icon: CheckCircle, priority: 2 },
   'flagged': { label: 'Flagged', color: 'bg-red-100 text-red-800', icon: AlertTriangle, priority: 0 },
@@ -181,6 +27,45 @@ const fellowTypeConfig = {
   'Senior Congressional Innovation Fellow': { label: 'Senior CIF', color: 'bg-indigo-100 text-indigo-700' },
   'Congressional Innovation Fellow': { label: 'CIF', color: 'bg-slate-100 text-slate-700' }
 };
+
+// ============ AIRTABLE FETCH ============
+async function fetchFellowsFromAirtable() {
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Airtable error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // Map Airtable records to our format
+  return data.records.map(record => ({
+    id: record.id,
+    name: record.fields['Name'] || '',
+    email: record.fields['Email'] || '',
+    phone: record.fields['Phone'] || '',
+    fellowType: record.fields['Fellow Type'] || '',
+    party: record.fields['Party'] || '',
+    office: record.fields['Office'] || '',
+    chamber: record.fields['Chamber'] || '',
+    linkedin: record.fields['LinkedIn'] || '',
+    startDate: record.fields['Start Date'] || '',
+    endDate: record.fields['End Date'] || '',
+    cohort: record.fields['Cohort'] || '',
+    status: record.fields['Status'] || 'on-track',
+    lastCheckIn: record.fields['Last Check-In'] || '',
+    priorRole: record.fields['Prior Role'] || '',
+    education: record.fields['Education'] || '',
+    notes: record.fields['Notes'] || ''
+  }));
+}
 
 // ============ COMPONENTS ============
 
@@ -244,7 +129,9 @@ function NeedsCheckInBadge() {
 
 function FellowCard({ fellow, onClick }) {
   const daysUntilEnd = Math.ceil((new Date(fellow.endDate) - new Date()) / (1000 * 60 * 60 * 24));
-  const daysSinceCheckIn = Math.ceil((new Date() - new Date(fellow.lastCheckIn)) / (1000 * 60 * 60 * 24));
+  const daysSinceCheckIn = fellow.lastCheckIn
+    ? Math.ceil((new Date() - new Date(fellow.lastCheckIn)) / (1000 * 60 * 60 * 24))
+    : 999;
   const needsCheckIn = daysSinceCheckIn > 30;
 
   return (
@@ -260,12 +147,12 @@ function FellowCard({ fellow, onClick }) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-            {fellow.name.split(' ').map(n => n[0]).join('')}
+            {fellow.name ? fellow.name.split(' ').map(n => n[0]).join('') : '?'}
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">{fellow.name}</h3>
+            <h3 className="font-semibold text-gray-900">{fellow.name || 'Unknown'}</h3>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-sm text-gray-500">Cohort {fellow.cohort}</span>
+              {fellow.cohort && <span className="text-sm text-gray-500">Cohort {fellow.cohort}</span>}
               <FellowTypeBadge fellowType={fellow.fellowType} />
             </div>
           </div>
@@ -277,25 +164,31 @@ function FellowCard({ fellow, onClick }) {
       </div>
 
       <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Building2 className="w-4 h-4 text-gray-400" />
-          <span>{fellow.office}</span>
-          <PartyBadge party={fellow.party} />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <span>{new Date(fellow.startDate).toLocaleDateString()} - {new Date(fellow.endDate).toLocaleDateString()}</span>
-          {daysUntilEnd > 0 && daysUntilEnd <= 90 && (
-            <span className="text-orange-600 font-medium">({daysUntilEnd} days left)</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Clock className="w-4 h-4 text-gray-400" />
-          <span>Last check-in: {new Date(fellow.lastCheckIn).toLocaleDateString()}</span>
-          {needsCheckIn && (
-            <span className="text-yellow-600 font-medium">({daysSinceCheckIn} days ago)</span>
-          )}
-        </div>
+        {fellow.office && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Building2 className="w-4 h-4 text-gray-400" />
+            <span>{fellow.office}</span>
+            <PartyBadge party={fellow.party} />
+          </div>
+        )}
+        {fellow.startDate && fellow.endDate && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <span>{new Date(fellow.startDate).toLocaleDateString()} - {new Date(fellow.endDate).toLocaleDateString()}</span>
+            {daysUntilEnd > 0 && daysUntilEnd <= 90 && (
+              <span className="text-orange-600 font-medium">({daysUntilEnd} days left)</span>
+            )}
+          </div>
+        )}
+        {fellow.lastCheckIn && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Clock className="w-4 h-4 text-gray-400" />
+            <span>Last check-in: {new Date(fellow.lastCheckIn).toLocaleDateString()}</span>
+            {needsCheckIn && (
+              <span className="text-yellow-600 font-medium">({daysSinceCheckIn} days ago)</span>
+            )}
+          </div>
+        )}
       </div>
 
       {fellow.notes && (
@@ -310,8 +203,12 @@ function FellowCard({ fellow, onClick }) {
 function FellowModal({ fellow, onClose }) {
   if (!fellow) return null;
 
-  const duration = Math.round((new Date(fellow.endDate) - new Date(fellow.startDate)) / (1000 * 60 * 60 * 24 * 30));
-  const daysSinceCheckIn = Math.ceil((new Date() - new Date(fellow.lastCheckIn)) / (1000 * 60 * 60 * 24));
+  const duration = fellow.startDate && fellow.endDate
+    ? Math.round((new Date(fellow.endDate) - new Date(fellow.startDate)) / (1000 * 60 * 60 * 24 * 30))
+    : 0;
+  const daysSinceCheckIn = fellow.lastCheckIn
+    ? Math.ceil((new Date() - new Date(fellow.lastCheckIn)) / (1000 * 60 * 60 * 24))
+    : 999;
   const needsCheckIn = daysSinceCheckIn > 30;
 
   return (
@@ -321,11 +218,15 @@ function FellowModal({ fellow, onClose }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-semibold">
-                {fellow.name.split(' ').map(n => n[0]).join('')}
+                {fellow.name ? fellow.name.split(' ').map(n => n[0]).join('') : '?'}
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">{fellow.name}</h2>
-                <p className="text-gray-500">Cohort {fellow.cohort} • {duration} month fellowship</p>
+                <p className="text-gray-500">
+                  {fellow.cohort && `Cohort ${fellow.cohort}`}
+                  {fellow.cohort && duration > 0 && ' • '}
+                  {duration > 0 && `${duration} month fellowship`}
+                </p>
               </div>
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
@@ -344,12 +245,16 @@ function FellowModal({ fellow, onClose }) {
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="text-sm font-medium text-gray-500 mb-3">Contact Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <a href={`mailto:${fellow.email}`} className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600">
-                <Mail className="w-4 h-4" /> {fellow.email}
-              </a>
-              <a href={`tel:${fellow.phone}`} className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600">
-                <Phone className="w-4 h-4" /> {fellow.phone}
-              </a>
+              {fellow.email && (
+                <a href={`mailto:${fellow.email}`} className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600">
+                  <Mail className="w-4 h-4" /> {fellow.email}
+                </a>
+              )}
+              {fellow.phone && (
+                <a href={`tel:${fellow.phone}`} className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600">
+                  <Phone className="w-4 h-4" /> {fellow.phone}
+                </a>
+              )}
               {fellow.linkedin && (
                 <a href={fellow.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600">
                   <Linkedin className="w-4 h-4" /> LinkedIn
@@ -360,35 +265,47 @@ function FellowModal({ fellow, onClose }) {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-1">Fellow Type</h4>
-              <p className="text-gray-900">{fellow.fellowType}</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-1">Placement</h4>
-              <p className="text-gray-900 font-medium">{fellow.office}</p>
-              <p className="text-sm text-gray-500">{fellow.chamber}</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-1">Fellowship Period</h4>
-              <p className="text-gray-900">{new Date(fellow.startDate).toLocaleDateString()} - {new Date(fellow.endDate).toLocaleDateString()}</p>
-              <p className="text-sm text-gray-500">{duration} months</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-1">Prior Role</h4>
-              <p className="text-gray-900">{fellow.priorRole}</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-1">Education</h4>
-              <p className="text-gray-900">{fellow.education}</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-1">Last Check-in</h4>
-              <p className={`text-gray-900 ${needsCheckIn ? 'text-yellow-600 font-medium' : ''}`}>
-                {new Date(fellow.lastCheckIn).toLocaleDateString()}
-                {needsCheckIn && ` (${daysSinceCheckIn} days ago)`}
-              </p>
-            </div>
+            {fellow.fellowType && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Fellow Type</h4>
+                <p className="text-gray-900">{fellow.fellowType}</p>
+              </div>
+            )}
+            {fellow.office && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Placement</h4>
+                <p className="text-gray-900 font-medium">{fellow.office}</p>
+                {fellow.chamber && <p className="text-sm text-gray-500">{fellow.chamber}</p>}
+              </div>
+            )}
+            {fellow.startDate && fellow.endDate && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Fellowship Period</h4>
+                <p className="text-gray-900">{new Date(fellow.startDate).toLocaleDateString()} - {new Date(fellow.endDate).toLocaleDateString()}</p>
+                {duration > 0 && <p className="text-sm text-gray-500">{duration} months</p>}
+              </div>
+            )}
+            {fellow.priorRole && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Prior Role</h4>
+                <p className="text-gray-900">{fellow.priorRole}</p>
+              </div>
+            )}
+            {fellow.education && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Education</h4>
+                <p className="text-gray-900">{fellow.education}</p>
+              </div>
+            )}
+            {fellow.lastCheckIn && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Last Check-in</h4>
+                <p className={`text-gray-900 ${needsCheckIn ? 'text-yellow-600 font-medium' : ''}`}>
+                  {new Date(fellow.lastCheckIn).toLocaleDateString()}
+                  {needsCheckIn && ` (${daysSinceCheckIn} days ago)`}
+                </p>
+              </div>
+            )}
           </div>
 
           {fellow.notes && (
@@ -414,9 +331,38 @@ function FellowModal({ fellow, onClose }) {
   );
 }
 
+function LoadingState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+      <p className="text-gray-500">Loading fellows from Airtable...</p>
+    </div>
+  );
+}
+
+function ErrorState({ error, onRetry }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load fellows</h3>
+      <p className="text-gray-500 mb-4">{error}</p>
+      <button
+        onClick={onRetry}
+        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+      >
+        Try Again
+      </button>
+    </div>
+  );
+}
+
 // ============ MAIN DASHBOARD ============
 
 export default function FellowshipDashboard() {
+  const [fellowsData, setFellowsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [cohortFilter, setCohortFilter] = useState('all');
@@ -426,13 +372,36 @@ export default function FellowshipDashboard() {
   const [selectedFellow, setSelectedFellow] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Fetch data from Airtable
+  const loadFellows = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const fellows = await fetchFellowsFromAirtable();
+      setFellowsData(fellows);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFellows();
+  }, []);
+
+  // Get unique cohorts from data
+  const allCohorts = useMemo(() => {
+    return [...new Set(fellowsData.map(f => f.cohort).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+  }, [fellowsData]);
+
   // Filter fellows
   const filteredFellows = useMemo(() => {
     return fellowsData
       .filter(fellow => {
         const matchesSearch = searchTerm === '' ||
-          fellow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          fellow.office.toLowerCase().includes(searchTerm.toLowerCase());
+          (fellow.name && fellow.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (fellow.office && fellow.office.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesStatus = statusFilter === 'all' || fellow.status === statusFilter;
         const matchesCohort = cohortFilter === 'all' || fellow.cohort === cohortFilter;
         const matchesChamber = chamberFilter === 'all' || fellow.chamber === chamberFilter;
@@ -447,15 +416,16 @@ export default function FellowshipDashboard() {
         if (aPriority !== bPriority) return aPriority - bPriority;
 
         // Secondary sort: needs check-in
-        const aDaysSince = Math.ceil((new Date() - new Date(a.lastCheckIn)) / (1000 * 60 * 60 * 24));
-        const bDaysSince = Math.ceil((new Date() - new Date(b.lastCheckIn)) / (1000 * 60 * 60 * 24));
+        const aDaysSince = a.lastCheckIn ? Math.ceil((new Date() - new Date(a.lastCheckIn)) / (1000 * 60 * 60 * 24)) : 999;
+        const bDaysSince = b.lastCheckIn ? Math.ceil((new Date() - new Date(b.lastCheckIn)) / (1000 * 60 * 60 * 24)) : 999;
         return bDaysSince - aDaysSince;
       });
-  }, [searchTerm, statusFilter, cohortFilter, chamberFilter, partyFilter, fellowTypeFilter]);
+  }, [fellowsData, searchTerm, statusFilter, cohortFilter, chamberFilter, partyFilter, fellowTypeFilter]);
 
   // Stats
   const stats = useMemo(() => {
     const needsCheckInCount = fellowsData.filter(f => {
+      if (!f.lastCheckIn) return true;
       const daysSince = Math.ceil((new Date() - new Date(f.lastCheckIn)) / (1000 * 60 * 60 * 24));
       return daysSince > 30 && f.status === 'on-track';
     }).length;
@@ -467,7 +437,7 @@ export default function FellowshipDashboard() {
       endingSoon: fellowsData.filter(f => f.status === 'ending-soon').length,
       needsCheckIn: needsCheckInCount
     };
-  }, []);
+  }, [fellowsData]);
 
   const clearFilters = () => {
     setStatusFilter('all');
@@ -501,89 +471,97 @@ export default function FellowshipDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <StatCard icon={Users} label="Total Fellows" value={stats.total} subtext="Currently placed" color="text-blue-600" />
-          <StatCard icon={CheckCircle} label="On Track" value={stats.onTrack} subtext="No issues" color="text-green-600" />
-          <StatCard icon={Bell} label="Needs Check-in" value={stats.needsCheckIn} subtext="30+ days since contact" color="text-yellow-600" />
-          <StatCard icon={AlertTriangle} label="Flagged" value={stats.flagged} subtext="Needs attention" color="text-red-600" />
-          <StatCard icon={Clock} label="Ending Soon" value={stats.endingSoon} subtext="Within 90 days" color="text-orange-600" />
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name or office..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState error={error} onRetry={loadFellows} />
+        ) : (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+              <StatCard icon={Users} label="Total Fellows" value={stats.total} subtext="Currently placed" color="text-blue-600" />
+              <StatCard icon={CheckCircle} label="On Track" value={stats.onTrack} subtext="No issues" color="text-green-600" />
+              <StatCard icon={Bell} label="Needs Check-in" value={stats.needsCheckIn} subtext="30+ days since contact" color="text-yellow-600" />
+              <StatCard icon={AlertTriangle} label="Flagged" value={stats.flagged} subtext="Needs attention" color="text-red-600" />
+              <StatCard icon={Clock} label="Ending Soon" value={stats.endingSoon} subtext="Within 90 days" color="text-orange-600" />
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors lg:hidden"
-            >
-              <Filter className="w-4 h-4" />
-              Filters
-              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-            </button>
-            <div className={`flex flex-col lg:flex-row gap-3 ${showFilters ? '' : 'hidden lg:flex'}`}>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="all">All Statuses</option>
-                {Object.entries(statusConfig).map(([key, { label }]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-              <select value={fellowTypeFilter} onChange={(e) => setFellowTypeFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="all">All Fellow Types</option>
-                <option value="Senior Congressional Innovation Fellow">Senior CIF</option>
-                <option value="Congressional Innovation Fellow">CIF</option>
-              </select>
-              <select value={partyFilter} onChange={(e) => setPartyFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="all">All Parties</option>
-                <option value="Democrat">Democrat</option>
-                <option value="Republican">Republican</option>
-                <option value="Independent">Independent</option>
-              </select>
-              <select value={chamberFilter} onChange={(e) => setChamberFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="all">All Chambers</option>
-                <option value="Senate">Senate</option>
-                <option value="House">House</option>
-              </select>
-              <select value={cohortFilter} onChange={(e) => setCohortFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="all">All Cohorts</option>
-                {allCohorts.map(cohort => (
-                  <option key={cohort} value={cohort}>{cohort}</option>
-                ))}
-              </select>
+
+            {/* Search and Filters */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or office..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors lg:hidden"
+                >
+                  <Filter className="w-4 h-4" />
+                  Filters
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`flex flex-col lg:flex-row gap-3 ${showFilters ? '' : 'hidden lg:flex'}`}>
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="all">All Statuses</option>
+                    {Object.entries(statusConfig).map(([key, { label }]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                  <select value={fellowTypeFilter} onChange={(e) => setFellowTypeFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="all">All Fellow Types</option>
+                    <option value="Senior Congressional Innovation Fellow">Senior CIF</option>
+                    <option value="Congressional Innovation Fellow">CIF</option>
+                  </select>
+                  <select value={partyFilter} onChange={(e) => setPartyFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="all">All Parties</option>
+                    <option value="Democrat">Democrat</option>
+                    <option value="Republican">Republican</option>
+                    <option value="Independent">Independent</option>
+                  </select>
+                  <select value={chamberFilter} onChange={(e) => setChamberFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="all">All Chambers</option>
+                    <option value="Senate">Senate</option>
+                    <option value="House">House</option>
+                  </select>
+                  <select value={cohortFilter} onChange={(e) => setCohortFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="all">All Cohorts</option>
+                    {allCohorts.map(cohort => (
+                      <option key={cohort} value={cohort}>{cohort}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Results */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-gray-500">Showing {filteredFellows.length} of {fellowsData.length} fellows</p>
-          {hasActiveFilters && (
-            <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-700 font-medium">Clear all filters</button>
-          )}
-        </div>
+            {/* Results */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-gray-500">Showing {filteredFellows.length} of {fellowsData.length} fellows</p>
+              {hasActiveFilters && (
+                <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-700 font-medium">Clear all filters</button>
+              )}
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredFellows.map(fellow => (
-            <FellowCard key={fellow.id} fellow={fellow} onClick={setSelectedFellow} />
-          ))}
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredFellows.map(fellow => (
+                <FellowCard key={fellow.id} fellow={fellow} onClick={setSelectedFellow} />
+              ))}
+            </div>
 
-        {filteredFellows.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No fellows found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
-          </div>
+            {filteredFellows.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">No fellows found</h3>
+                <p className="text-gray-500">Try adjusting your search or filters</p>
+              </div>
+            )}
+          </>
         )}
       </main>
 
