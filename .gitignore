@@ -1,15 +1,25 @@
-# Dependencies
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+.venv/
 
-# Environment variables (KEEP THIS PRIVATE!)
+# Streamlit secrets (KEEP THIS PRIVATE!)
+.streamlit/secrets.toml
+
+# Environment variables
 .env
 .env.local
 .env.production
-
-# Build output
-dist/
 
 # Editor/OS files
 .DS_Store
 .vscode/
 *.log
+
+# Old React files (can remove after cleanup)
+node_modules/
+dist/
