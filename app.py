@@ -346,14 +346,17 @@ def show_fellow_card(fellow):
     needs_checkin = days_since_checkin > 30 and fellow["status"] == "on-track"
     days_until_end = calculate_days_until(fellow["end_date"])
 
-    # Status badge colors
+    # Status badge colors - handle both Airtable values and internal values
     status_colors = {
         "on-track": ("#4ade80", "#166534"),
+        "Active": ("#4ade80", "#166534"),
         "flagged": ("#fde047", "#854d0e"),
-        "ending-soon": ("#f87171", "#991b1b")
+        "Flagged": ("#fde047", "#854d0e"),
+        "ending-soon": ("#f87171", "#991b1b"),
+        "Ending Soon": ("#f87171", "#991b1b")
     }
     status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
-    bg_color, text_color = status_colors.get(fellow["status"], ("#6b7280", "#ffffff"))
+    bg_color, text_color = status_colors.get(fellow["status"], ("#4ade80", "#166534"))
 
     # Fellow type badge
     type_label = ""
