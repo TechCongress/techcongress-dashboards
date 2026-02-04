@@ -90,6 +90,8 @@ def create_fellow(fellow_data):
     fields = {k: v for k, v in fields.items() if v}
 
     response = requests.post(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Airtable error {response.status_code}: {response.text}")
     return response.status_code == 200
 
 
@@ -124,6 +126,8 @@ def update_fellow(record_id, fellow_data):
     fields = {k: v for k, v in fields.items() if v}
 
     response = requests.patch(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Airtable error {response.status_code}: {response.text}")
     return response.status_code == 200
 
 
