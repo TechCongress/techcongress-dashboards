@@ -276,6 +276,32 @@ st.markdown("""
         color: #1f2937 !important;
     }
 
+    /* Help icon (question mark) styling */
+    [data-testid="stMetric"] svg {
+        color: #6b7280 !important;
+        stroke: #6b7280 !important;
+    }
+
+    /* Tooltip styling */
+    [data-testid="stTooltipIcon"] {
+        color: #6b7280 !important;
+    }
+
+    [data-testid="stTooltipIcon"] svg {
+        color: #6b7280 !important;
+        stroke: #6b7280 !important;
+    }
+
+    /* Tooltip popup content */
+    div[data-baseweb="tooltip"] {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+    }
+
+    div[data-baseweb="tooltip"] div {
+        color: #ffffff !important;
+    }
+
     [data-testid="stSidebar"] {
         background-color: #ffffff;
     }
