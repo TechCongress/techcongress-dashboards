@@ -40,7 +40,7 @@ def fetch_fellows():
             "id": record["id"],
             "name": fields.get("Name", ""),
             "email": fields.get("Email", ""),
-            "phone": fields.get("Phone", ""),
+            "phone": fields.get("Phone Number", ""),
             "fellow_type": fields.get("Fellow Type", ""),
             "party": fields.get("Party", ""),
             "office": fields.get("Office", ""),
@@ -70,7 +70,7 @@ def create_fellow(fellow_data):
     fields = {
         "Name": fellow_data.get("name"),
         "Email": fellow_data.get("email"),
-        "Phone": fellow_data.get("phone"),
+        "Phone Number": fellow_data.get("phone"),
         "Fellow Type": fellow_data.get("fellow_type"),
         "Party": fellow_data.get("party"),
         "Office": fellow_data.get("office"),
@@ -106,7 +106,7 @@ def update_fellow(record_id, fellow_data):
     fields = {
         "Name": fellow_data.get("name"),
         "Email": fellow_data.get("email"),
-        "Phone": fellow_data.get("phone"),
+        "Phone Number": fellow_data.get("phone"),
         "Fellow Type": fellow_data.get("fellow_type"),
         "Party": fellow_data.get("party"),
         "Office": fellow_data.get("office"),
