@@ -159,6 +159,19 @@ st.markdown("""
     .stApp {
         background-color: #f8fafc;
     }
+
+    /* Force light mode styling */
+    [data-testid="stAppViewContainer"] {
+        background-color: #f8fafc;
+    }
+
+    [data-testid="stHeader"] {
+        background-color: #f8fafc;
+    }
+
+    h1, h2, h3, p, span, label {
+        color: #1f2937 !important;
+    }
     .stat-card {
         background: white;
         padding: 1.25rem;
@@ -209,6 +222,35 @@ st.markdown("""
         padding: 1rem;
         border-radius: 0.75rem;
         border: 1px solid #e5e7eb;
+    }
+
+    div[data-testid="stMetric"] label {
+        color: #6b7280 !important;
+    }
+
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background-color: #ffffff;
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #1f2937 !important;
+    }
+
+    .stButton button {
+        color: #1f2937;
+    }
+
+    .stSelectbox label, .stTextInput label {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stExpander"] {
+        background-color: white;
+        border-radius: 0.75rem;
     }
 </style>
 """, unsafe_allow_html=True)
