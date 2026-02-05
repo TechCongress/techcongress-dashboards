@@ -260,6 +260,26 @@ st.markdown("""
         background-color: white;
         border-radius: 0.75rem;
     }
+
+    [data-testid="stExpander"] summary {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stExpander"] summary span {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stExpander"] div {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stExpanderDetails"] {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stExpanderDetails"] p {
+        color: #1f2937 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
