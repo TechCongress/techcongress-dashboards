@@ -54,6 +54,14 @@ def check_password():
 if not check_password():
     st.stop()
 
+# Initialize session state early (before any UI)
+if "show_add_form" not in st.session_state:
+    st.session_state.show_add_form = False
+if "editing_fellow" not in st.session_state:
+    st.session_state.editing_fellow = None
+if "selected_fellow" not in st.session_state:
+    st.session_state.selected_fellow = None
+
 # ============ AIRTABLE CONFIG ============
 AIRTABLE_API_KEY = st.secrets["airtable"]["api_key"]
 AIRTABLE_BASE_ID = st.secrets["airtable"]["base_id"]
@@ -303,11 +311,29 @@ st.markdown("""
     }
 
     [data-testid="stSidebar"] {
-        background-color: #ffffff;
+        background-color: #ffffff !important;
     }
 
     [data-testid="stSidebar"] * {
         color: #1f2937 !important;
+    }
+
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h4,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] a {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stSidebar"] hr {
+        border-color: #e5e7eb !important;
+    }
+
+    [data-testid="stSidebarContent"] {
+        background-color: #ffffff !important;
     }
 
     .stButton button {
@@ -357,14 +383,6 @@ st.markdown("""
 # ============ MAIN APP ============
 
 def main():
-    # Initialize session state
-    if "show_add_form" not in st.session_state:
-        st.session_state.show_add_form = False
-    if "editing_fellow" not in st.session_state:
-        st.session_state.editing_fellow = None
-    if "selected_fellow" not in st.session_state:
-        st.session_state.selected_fellow = None
-
     # Header
     col1, col2 = st.columns([3, 1])
     with col1:
