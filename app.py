@@ -50,7 +50,7 @@ def fetch_fellows():
             "end_date": fields.get("End Date", ""),
             "cohort": fields.get("Cohort", ""),
             "status": fields.get("Status", "Active"),
-            "last_check_in": fields.get("Last Check-In", ""),
+            "last_check_in": fields.get("Last Check-in", ""),
             "prior_role": fields.get("Prior Role", ""),
             "education": fields.get("Education", ""),
             "notes": fields.get("Notes", "")
@@ -80,7 +80,7 @@ def create_fellow(fellow_data):
         "End Date": fellow_data.get("end_date"),
         "Cohort": fellow_data.get("cohort"),
         "Status": fellow_data.get("status", "Active"),
-        "Last Check-In": fellow_data.get("last_check_in"),
+        "Last Check-in": fellow_data.get("last_check_in"),
         "Prior Role": fellow_data.get("prior_role"),
         "Education": fellow_data.get("education"),
         "Notes": fellow_data.get("notes")
@@ -116,7 +116,7 @@ def update_fellow(record_id, fellow_data):
         "End Date": fellow_data.get("end_date"),
         "Cohort": fellow_data.get("cohort"),
         "Status": fellow_data.get("status", "Active"),
-        "Last Check-In": fellow_data.get("last_check_in"),
+        "Last Check-in": fellow_data.get("last_check_in"),
         "Prior Role": fellow_data.get("prior_role"),
         "Education": fellow_data.get("education"),
         "Notes": fellow_data.get("notes")
@@ -547,7 +547,7 @@ def show_fellow_form():
             )
         with col3:
             last_check_in = st.date_input(
-                "Last Check-In",
+                "Last Check-in",
                 value=datetime.strptime(fellow["last_check_in"], "%Y-%m-%d") if fellow.get("last_check_in") else None,
                 format="YYYY-MM-DD"
             )
