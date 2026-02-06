@@ -61,11 +61,14 @@ if "editing_fellow" not in st.session_state:
     st.session_state.editing_fellow = None
 if "selected_fellow" not in st.session_state:
     st.session_state.selected_fellow = None
+if "show_checkin_form" not in st.session_state:
+    st.session_state.show_checkin_form = False
 
 # ============ AIRTABLE CONFIG ============
 AIRTABLE_API_KEY = st.secrets["airtable"]["api_key"]
 AIRTABLE_BASE_ID = st.secrets["airtable"]["base_id"]
 AIRTABLE_TABLE_NAME = st.secrets["airtable"]["table_name"]
+CHECKINS_TABLE_NAME = "Check-ins"
 
 # ============ HELPER FUNCTIONS ============
 
@@ -178,6 +181,68 @@ def update_fellow(record_id, fellow_data):
     fields = {k: v for k, v in fields.items() if v}
 
     response = requests.patch(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Airtable error {response.status_code}: {response.text}")
+    return response.status_code == 200
+
+
+def fetch_checkins(fellow_name):
+    """Fetch all check-ins for a specific fellow"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{CHECKINS_TABLE_NAME}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    # Filter by fellow name and sort by date descending
+    params = {
+        "filterByFormula": f"{{Fellow}} = '{fellow_name}'",
+        "sort[0][field]": "Date",
+        "sort[0][direction]": "desc"
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        return []
+
+    data = response.json()
+    checkins = []
+
+    for record in data.get("records", []):
+        fields = record.get("fields", {})
+        checkins.append({
+            "id": record["id"],
+            "fellow": fields.get("Fellow", ""),
+            "date": fields.get("Date", ""),
+            "check_in_type": fields.get("Check-in Type", ""),
+            "notes": fields.get("Notes", ""),
+            "staff_member": fields.get("Staff Member", "")
+        })
+
+    return checkins
+
+
+def add_checkin(checkin_data):
+    """Add a new check-in to Airtable"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{CHECKINS_TABLE_NAME}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    fields = {
+        "Fellow": checkin_data.get("fellow"),
+        "Date": checkin_data.get("date"),
+        "Check-in Type": checkin_data.get("check_in_type"),
+        "Notes": checkin_data.get("notes"),
+        "Staff Member": checkin_data.get("staff_member")
+    }
+
+    # Remove empty fields
+    fields = {k: v for k, v in fields.items() if v}
+
+    response = requests.post(url, headers=headers, json={"fields": fields})
     if response.status_code != 200:
         st.error(f"Airtable error {response.status_code}: {response.text}")
     return response.status_code == 200
@@ -650,6 +715,56 @@ def show_fellow_details():
             st.markdown("---")
             st.markdown("#### Notes")
             st.markdown(fellow["notes"])
+
+        st.markdown("---")
+
+        # Check-in History
+        st.markdown("#### Check-in History")
+
+        if st.button("+ Log Check-in", use_container_width=True):
+            st.session_state.show_checkin_form = True
+            st.rerun()
+
+        # Show check-in form if toggled
+        if st.session_state.show_checkin_form:
+            with st.form("checkin_form"):
+                checkin_date = st.date_input("Date", value=datetime.now())
+                checkin_type = st.selectbox("Check-in Type", ["Email", "Phone", "Video call", "In-person", "Slack", "Text"])
+                checkin_notes = st.text_area("Notes")
+                staff_member = st.text_input("Staff Member")
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Save", use_container_width=True):
+                        checkin_data = {
+                            "fellow": fellow["name"],
+                            "date": checkin_date.strftime("%Y-%m-%d"),
+                            "check_in_type": checkin_type,
+                            "notes": checkin_notes,
+                            "staff_member": staff_member
+                        }
+                        if add_checkin(checkin_data):
+                            st.success("Check-in logged!")
+                            st.session_state.show_checkin_form = False
+                            st.rerun()
+                with col2:
+                    if st.form_submit_button("Cancel", use_container_width=True):
+                        st.session_state.show_checkin_form = False
+                        st.rerun()
+
+        # Display check-in history
+        checkins = fetch_checkins(fellow["name"])
+        if checkins:
+            for checkin in checkins:
+                st.markdown(f"""
+                <div style="background-color:#f8fafc;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #3b82f6;">
+                    <div style="font-weight:600;color:#1f2937;font-size:0.9rem;">{checkin['date']} • {checkin['check_in_type']}</div>
+                    <div style="color:#4b5563;font-size:0.85rem;margin-top:0.25rem;">{checkin['notes']}</div>
+                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.25rem;">— {checkin['staff_member']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.caption("No check-ins recorded yet.")
 
         st.markdown("---")
 
