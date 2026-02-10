@@ -63,6 +63,8 @@ if "modal_fellow_id" not in st.session_state:
     st.session_state.modal_fellow_id = None
 if "show_checkin_form" not in st.session_state:
     st.session_state.show_checkin_form = False
+if "trigger_modal" not in st.session_state:
+    st.session_state.trigger_modal = False
 
 # ============ AIRTABLE CONFIG ============
 AIRTABLE_API_KEY = st.secrets["airtable"]["api_key"]
@@ -732,6 +734,185 @@ st.markdown("""
         background: #e5e7eb;
         color: #1f2937;
     }
+
+    /* Force light mode for dialogs */
+    [data-testid="stDialog"],
+    [data-testid="stDialog"] > div,
+    [data-testid="stDialog"] [data-testid="stVerticalBlock"],
+    [data-testid="stDialog"] [data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stDialog"] section,
+    [data-testid="stDialog"] [role="dialog"],
+    [role="dialog"],
+    [role="dialog"] > div,
+    div[data-modal-container="true"],
+    .stDialog > div {
+        background-color: white !important;
+    }
+
+    [data-testid="stDialog"] h1,
+    [data-testid="stDialog"] h2,
+    [data-testid="stDialog"] h3,
+    [data-testid="stDialog"] h4,
+    [data-testid="stDialog"] h5,
+    [data-testid="stDialog"] p,
+    [data-testid="stDialog"] span,
+    [data-testid="stDialog"] label,
+    [data-testid="stDialog"] div,
+    [role="dialog"] h1,
+    [role="dialog"] h2,
+    [role="dialog"] h3,
+    [role="dialog"] h4,
+    [role="dialog"] p,
+    [role="dialog"] span,
+    [role="dialog"] div {
+        color: #1f2937 !important;
+    }
+
+    /* Dialog header specifically */
+    [data-testid="stDialogHeader"],
+    [data-testid="stDialog"] header,
+    [role="dialog"] header {
+        background-color: white !important;
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stDialog"] a,
+    [role="dialog"] a {
+        color: #2563eb !important;
+    }
+
+    [data-testid="stDialog"] [data-testid="stMarkdownContainer"] p {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stDialog"] [data-testid="stCaptionContainer"],
+    [role="dialog"] [data-testid="stCaptionContainer"] {
+        color: #6b7280 !important;
+    }
+
+    [data-testid="stDialog"] hr,
+    [role="dialog"] hr {
+        border-color: #e5e7eb !important;
+    }
+
+    /* Form inputs in dialog */
+    [data-testid="stDialog"] input,
+    [data-testid="stDialog"] textarea,
+    [data-testid="stDialog"] select,
+    [role="dialog"] input,
+    [role="dialog"] textarea,
+    [role="dialog"] select {
+        background-color: white !important;
+        color: #1f2937 !important;
+        border-color: #d1d5db !important;
+    }
+
+    /* Select boxes in dialog */
+    [data-testid="stDialog"] [data-baseweb="select"],
+    [data-testid="stDialog"] [data-baseweb="select"] > div,
+    [role="dialog"] [data-baseweb="select"],
+    [role="dialog"] [data-baseweb="select"] > div {
+        background-color: white !important;
+        color: #1f2937 !important;
+    }
+
+    /* Dialog close button (X) */
+    [data-testid="stDialog"] button[aria-label="Close"],
+    [role="dialog"] button[aria-label="Close"],
+    [data-testid="stDialogCloseButton"],
+    [data-testid="stDialog"] [data-testid="baseButton-header"],
+    [role="dialog"] [data-testid="baseButton-header"] {
+        color: #1f2937 !important;
+        background-color: #f3f4f6 !important;
+    }
+
+    [data-testid="stDialog"] button[aria-label="Close"]:hover,
+    [role="dialog"] button[aria-label="Close"]:hover {
+        background-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    /* Close button icon/svg */
+    [data-testid="stDialog"] button[aria-label="Close"] svg,
+    [role="dialog"] button[aria-label="Close"] svg,
+    [data-testid="stDialog"] [data-testid="baseButton-header"] svg {
+        stroke: #1f2937 !important;
+        color: #1f2937 !important;
+    }
+
+    /* Force light mode globally */
+    [data-testid="stAppViewContainer"],
+    [data-testid="stApp"],
+    .main,
+    .block-container {
+        background-color: #f8fafc !important;
+        color: #1f2937 !important;
+    }
+
+    /* Expander / Filters section */
+    [data-testid="stExpander"],
+    [data-testid="stExpander"] > div,
+    [data-testid="stExpander"] details,
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpanderDetails"] {
+        background-color: white !important;
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stExpander"] summary span,
+    [data-testid="stExpander"] p {
+        color: #1f2937 !important;
+    }
+
+    /* All form inputs - light mode */
+    input, textarea, select,
+    [data-baseweb="input"],
+    [data-baseweb="input"] input,
+    [data-baseweb="textarea"],
+    [data-baseweb="select"],
+    [data-baseweb="select"] > div {
+        background-color: white !important;
+        color: #1f2937 !important;
+        border-color: #d1d5db !important;
+    }
+
+    /* Select dropdown text */
+    [data-baseweb="select"] span,
+    [data-baseweb="select"] div[class*="valueContainer"],
+    [data-baseweb="select"] div[class*="singleValue"] {
+        color: #1f2937 !important;
+    }
+
+    /* Dropdown menu */
+    [data-baseweb="popover"],
+    [data-baseweb="menu"],
+    [data-baseweb="popover"] ul,
+    [data-baseweb="menu"] ul,
+    [role="listbox"],
+    [role="listbox"] li,
+    [role="option"] {
+        background-color: white !important;
+        color: #1f2937 !important;
+    }
+
+    [role="option"]:hover {
+        background-color: #f3f4f6 !important;
+    }
+
+    /* Labels */
+    .stSelectbox label,
+    .stTextInput label,
+    .stDateInput label,
+    .stTextArea label,
+    [data-testid="stWidgetLabel"] {
+        color: #1f2937 !important;
+    }
+
+    /* Placeholder text */
+    input::placeholder,
+    textarea::placeholder {
+        color: #9ca3af !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -761,11 +942,13 @@ def main():
     with st.spinner("Loading fellows..."):
         fellows = fetch_fellows()
 
-    # Show modal if a fellow is selected
-    if st.session_state.modal_fellow_id:
+    # Show modal if a fellow is selected AND trigger_modal is True
+    if st.session_state.modal_fellow_id and st.session_state.trigger_modal:
         selected_fellow = next((f for f in fellows if f["id"] == st.session_state.modal_fellow_id), None)
         if selected_fellow:
             show_fellow_modal(selected_fellow)
+        # Reset trigger after showing modal
+        st.session_state.trigger_modal = False
 
     if not fellows:
         st.warning("No fellows found. Add your first fellow to get started!")
@@ -954,6 +1137,7 @@ def show_fellow_card(fellow):
     with col1:
         if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
             st.session_state.modal_fellow_id = fellow["id"]
+            st.session_state.trigger_modal = True
             st.rerun()
     with col2:
         if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
@@ -1020,7 +1204,7 @@ def show_fellow_modal(fellow):
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### Contact")
+        st.markdown("### Contact")
         if fellow["email"]:
             st.markdown(f"📧 [{fellow['email']}](mailto:{fellow['email']})")
         if fellow["phone"]:
@@ -1030,7 +1214,7 @@ def show_fellow_modal(fellow):
         if not fellow["email"] and not fellow["phone"] and not fellow["linkedin"]:
             st.caption("No contact info")
 
-        st.markdown("#### Fellowship Period")
+        st.markdown("### Fellowship Period")
         if fellow["start_date"]:
             st.markdown(f"**Start:** {fellow['start_date']}")
         if fellow["end_date"]:
@@ -1039,7 +1223,7 @@ def show_fellow_modal(fellow):
             st.markdown(f"**Last Check-in:** {fellow['last_check_in']} ({days_since_checkin} days ago)")
 
     with col2:
-        st.markdown("#### Placement")
+        st.markdown("### Placement")
         if fellow["office"]:
             st.markdown(f"**Office:** {fellow['office']}")
         if fellow["chamber"]:
@@ -1049,7 +1233,7 @@ def show_fellow_modal(fellow):
         if not fellow["office"] and not fellow["chamber"]:
             st.caption("No placement info")
 
-        st.markdown("#### Background")
+        st.markdown("### Background")
         if fellow["prior_role"]:
             st.markdown(f"**Prior Role:** {fellow['prior_role']}")
         if fellow["education"]:
