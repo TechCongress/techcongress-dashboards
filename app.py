@@ -186,7 +186,7 @@ def update_fellow(record_id, fellow_data):
     return response.status_code == 200
 
 
-def fetch_checkins(fellow_name):
+def fetch_checkins(fellow_id):
     """Fetch all check-ins for a specific fellow"""
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{CHECKINS_TABLE_NAME}"
     headers = {
@@ -194,9 +194,9 @@ def fetch_checkins(fellow_name):
         "Content-Type": "application/json"
     }
 
-    # Filter by fellow name and sort by date descending
+    # Filter by fellow record ID and sort by date descending
     params = {
-        "filterByFormula": f"{{Fellow}} = '{fellow_name}'",
+        "filterByFormula": f"FIND('{fellow_id}', ARRAYJOIN({{Fellow}}))",
         "sort[0][field]": "Date",
         "sort[0][direction]": "desc"
     }
@@ -232,7 +232,7 @@ def add_checkin(checkin_data):
     }
 
     fields = {
-        "Fellow": checkin_data.get("fellow"),
+        "Fellow": [checkin_data.get("fellow_id")],
         "Date": checkin_data.get("date"),
         "Check-in Type": checkin_data.get("check_in_type"),
         "Notes": checkin_data.get("notes"),
@@ -765,7 +765,7 @@ def show_fellow_details():
                 with col1:
                     if st.form_submit_button("Save", use_container_width=True):
                         checkin_data = {
-                            "fellow": fellow["name"],
+                            "fellow_id": fellow["id"],
                             "date": checkin_date.strftime("%Y-%m-%d"),
                             "check_in_type": checkin_type,
                             "notes": checkin_notes,
@@ -781,7 +781,7 @@ def show_fellow_details():
                         st.rerun()
 
         # Display check-in history
-        checkins = fetch_checkins(fellow["name"])
+        checkins = fetch_checkins(fellow["id"])
         if checkins:
             for checkin in checkins:
                 st.markdown(f"""
