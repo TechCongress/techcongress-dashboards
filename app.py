@@ -449,7 +449,7 @@ st.markdown("""
 
 def main():
     # Header
-    col1, col2, col3 = st.columns([3, 1, 0.5])
+    col1, col2, col3 = st.columns([3, 1, 1])
     with col1:
         st.title("TechCongress Fellows Dashboard")
         st.caption("Monitor and manage current fellow placements")
