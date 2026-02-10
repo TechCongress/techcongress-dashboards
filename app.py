@@ -526,7 +526,7 @@ def main():
             cohort_options = ["All Cohorts"] + cohorts
             cohort_filter = st.selectbox("Cohort", cohort_options)
         with col2:
-            sort_options = ["Priority (Flagged first)", "Name (A-Z)", "Name (Z-A)", "Last Check-in (oldest first)", "Last Check-in (newest first)", "End Date (soonest first)", "End Date (latest first)"]
+            sort_options = ["Priority (Flagged first)", "Name (A-Z)", "Name (Z-A)", "Last Check-in (oldest first)", "Last Check-in (newest first)", "End Date (soonest first)", "End Date (latest first)", "Cohort (newest first)", "Cohort (oldest first)"]
             sort_by = st.selectbox("Sort by", sort_options)
 
     # Apply filters
@@ -572,6 +572,10 @@ def main():
         filtered_fellows.sort(key=lambda f: f["end_date"] or "9999-99-99")
     elif sort_by == "End Date (latest first)":
         filtered_fellows.sort(key=lambda f: f["end_date"] or "0000-00-00", reverse=True)
+    elif sort_by == "Cohort (newest first)":
+        filtered_fellows.sort(key=lambda f: f["cohort"] or "", reverse=True)
+    elif sort_by == "Cohort (oldest first)":
+        filtered_fellows.sort(key=lambda f: f["cohort"] or "")
 
     # Show count
     st.caption(f"Showing {len(filtered_fellows)} of {total} fellows")
