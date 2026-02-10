@@ -481,7 +481,7 @@ def main():
     on_track = len([f for f in fellows if f["status"] in ["on-track", "Active"]])
     flagged = len([f for f in fellows if f["status"] in ["flagged", "Flagged"]])
     ending_soon = len([f for f in fellows if f["status"] in ["ending-soon", "Ending Soon"]])
-    needs_checkin = len([f for f in fellows if calculate_days_since(f["last_check_in"]) > 30 and f["status"] in ["on-track", "Active"]])
+    needs_checkin = len([f for f in fellows if calculate_days_since(f["last_check_in"]) > 210 and f["status"] in ["on-track", "Active"]])
 
     # Stats row
     st.markdown("---")
@@ -492,7 +492,7 @@ def main():
     with col2:
         st.metric("Active", on_track, help="No issues")
     with col3:
-        st.metric("Needs Check-in", needs_checkin, help="30+ days since contact")
+        st.metric("Needs Check-in", needs_checkin, help="7+ months since contact")
     with col4:
         st.metric("Flagged", flagged, help="Needs attention")
     with col5:
@@ -598,7 +598,7 @@ def main():
 def show_fellow_card(fellow):
     """Display a fellow card"""
     days_since_checkin = calculate_days_since(fellow["last_check_in"])
-    needs_checkin = days_since_checkin > 30 and fellow["status"] in ["on-track", "Active"]
+    needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"]
     days_until_end = calculate_days_until(fellow["end_date"])
 
     # Status badge colors - handle both Airtable values and internal values
