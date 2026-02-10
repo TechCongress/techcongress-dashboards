@@ -835,7 +835,7 @@ def show_fellow_details():
                     </div>
                     """, unsafe_allow_html=True)
                 with col2:
-                    if st.button("🗑️", key=f"delete_checkin_{checkin['id']}", help="Delete this check-in"):
+                    if st.button("Delete", key=f"delete_checkin_{checkin['id']}"):
                         if delete_checkin(checkin["id"]):
                             st.success("Check-in deleted!")
                             import time
