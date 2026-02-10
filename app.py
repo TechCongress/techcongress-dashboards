@@ -459,10 +459,12 @@ def main():
 
     st.caption("Monitor and manage current fellow placements")
 
-    if st.button("Add Fellow", type="primary"):
-        st.session_state.show_add_form = True
-        st.session_state.editing_fellow = None
-        st.rerun()
+    btn_col, _ = st.columns([1, 4])
+    with btn_col:
+        if st.button("Add Fellow", type="primary", use_container_width=True):
+            st.session_state.show_add_form = True
+            st.session_state.editing_fellow = None
+            st.rerun()
 
     # Fetch data
     with st.spinner("Loading fellows..."):
