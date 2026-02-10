@@ -520,9 +520,14 @@ def main():
             chamber_filter = st.selectbox("Chamber", chamber_options)
 
         # Cohort filter
-        cohorts = sorted(set([f["cohort"] for f in fellows if f["cohort"]]), reverse=True)
-        cohort_options = ["All Cohorts"] + cohorts
-        cohort_filter = st.selectbox("Cohort", cohort_options)
+        col1, col2 = st.columns(2)
+        with col1:
+            cohorts = sorted(set([f["cohort"] for f in fellows if f["cohort"]]), reverse=True)
+            cohort_options = ["All Cohorts"] + cohorts
+            cohort_filter = st.selectbox("Cohort", cohort_options)
+        with col2:
+            sort_options = ["Priority (Flagged first)", "Name (A-Z)", "Name (Z-A)", "Last Check-in (oldest first)", "Last Check-in (newest first)", "End Date (soonest first)", "End Date (latest first)"]
+            sort_by = st.selectbox("Sort by", sort_options)
 
     # Apply filters
     filtered_fellows = fellows.copy()
@@ -548,13 +553,25 @@ def main():
     if cohort_filter != "All Cohorts":
         filtered_fellows = [f for f in filtered_fellows if f["cohort"] == cohort_filter]
 
-    # Sort: flagged first, then ending-soon, then by days since check-in
-    def sort_key(f):
-        status_priority = {"flagged": 0, "Flagged": 0, "ending-soon": 1, "Ending Soon": 1, "on-track": 2, "Active": 2}.get(f["status"], 3)
-        days_since = calculate_days_since(f["last_check_in"])
-        return (status_priority, -days_since)
-
-    filtered_fellows.sort(key=sort_key)
+    # Sort based on selected option
+    if sort_by == "Priority (Flagged first)":
+        def sort_key(f):
+            status_priority = {"flagged": 0, "Flagged": 0, "ending-soon": 1, "Ending Soon": 1, "on-track": 2, "Active": 2}.get(f["status"], 3)
+            days_since = calculate_days_since(f["last_check_in"])
+            return (status_priority, -days_since)
+        filtered_fellows.sort(key=sort_key)
+    elif sort_by == "Name (A-Z)":
+        filtered_fellows.sort(key=lambda f: f["name"].lower())
+    elif sort_by == "Name (Z-A)":
+        filtered_fellows.sort(key=lambda f: f["name"].lower(), reverse=True)
+    elif sort_by == "Last Check-in (oldest first)":
+        filtered_fellows.sort(key=lambda f: f["last_check_in"] or "0000-00-00")
+    elif sort_by == "Last Check-in (newest first)":
+        filtered_fellows.sort(key=lambda f: f["last_check_in"] or "0000-00-00", reverse=True)
+    elif sort_by == "End Date (soonest first)":
+        filtered_fellows.sort(key=lambda f: f["end_date"] or "9999-99-99")
+    elif sort_by == "End Date (latest first)":
+        filtered_fellows.sort(key=lambda f: f["end_date"] or "0000-00-00", reverse=True)
 
     # Show count
     st.caption(f"Showing {len(filtered_fellows)} of {total} fellows")
