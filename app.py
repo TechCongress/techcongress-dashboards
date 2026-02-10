@@ -449,19 +449,20 @@ st.markdown("""
 
 def main():
     # Header
-    col1, col2, col3 = st.columns([3, 1, 1])
+    col1, col2 = st.columns([4, 1])
     with col1:
         st.title("TechCongress Fellows Dashboard")
-        st.caption("Monitor and manage current fellow placements")
     with col2:
-        if st.button("Add Fellow", type="primary", use_container_width=True):
-            st.session_state.show_add_form = True
-            st.session_state.editing_fellow = None
-            st.rerun()
-    with col3:
         if st.button("Logout", use_container_width=True):
             st.session_state["authenticated"] = False
             st.rerun()
+
+    st.caption("Monitor and manage current fellow placements")
+
+    if st.button("Add Fellow", type="primary"):
+        st.session_state.show_add_form = True
+        st.session_state.editing_fellow = None
+        st.rerun()
 
     # Fetch data
     with st.spinner("Loading fellows..."):
