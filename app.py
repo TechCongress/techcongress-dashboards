@@ -186,6 +186,23 @@ def update_fellow(record_id, fellow_data):
     return response.status_code == 200
 
 
+def update_fellow_checkin(record_id, checkin_date):
+    """Update just the Last Check-in field for a fellow"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}/{record_id}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    fields = {"Last Check-in": checkin_date}
+
+    response = requests.patch(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Failed to update Last Check-in: {response.status_code} - {response.text}")
+        return False
+    return True
+
+
 def fetch_checkins(fellow_id):
     """Fetch all check-ins for a specific fellow"""
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{CHECKINS_TABLE_NAME}"
@@ -249,6 +266,21 @@ def add_checkin(checkin_data):
     if response.status_code != 200:
         st.error(f"Airtable error {response.status_code}: {response.text}")
     return response.status_code == 200
+
+
+def delete_checkin(record_id):
+    """Delete a check-in from Airtable"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{CHECKINS_TABLE_NAME}/{record_id}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.delete(url, headers=headers)
+    if response.status_code != 200:
+        st.error(f"Failed to delete check-in: {response.status_code} - {response.text}")
+        return False
+    return True
 
 
 def calculate_days_since(date_str):
@@ -776,9 +808,13 @@ def show_fellow_details():
                         }
                         if add_checkin(checkin_data):
                             # Also update the fellow's Last Check-in date
-                            update_fellow(fellow["id"], {"last_check_in": checkin_date.strftime("%Y-%m-%d")})
-                            st.success("Check-in logged!")
+                            if update_fellow_checkin(fellow["id"], checkin_date.strftime("%Y-%m-%d")):
+                                st.success("Check-in logged!")
+                            else:
+                                st.warning("Check-in logged but failed to update Last Check-in date")
                             st.session_state.show_checkin_form = False
+                            import time
+                            time.sleep(2)  # Give time to see any error messages
                             st.rerun()
                 with col2:
                     if st.form_submit_button("Cancel", use_container_width=True):
@@ -789,13 +825,22 @@ def show_fellow_details():
         checkins = fetch_checkins(fellow["id"])
         if checkins:
             for checkin in checkins:
-                st.markdown(f"""
-                <div style="background-color:#f8fafc;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #3b82f6;">
-                    <div style="font-weight:600;color:#1f2937;font-size:0.9rem;">{checkin['date']} • {checkin['check_in_type']}</div>
-                    <div style="color:#4b5563;font-size:0.85rem;margin-top:0.25rem;">{checkin['notes']}</div>
-                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.25rem;">— {checkin['staff_member']}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                col1, col2 = st.columns([5, 1])
+                with col1:
+                    st.markdown(f"""
+                    <div style="background-color:#f8fafc;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #3b82f6;">
+                        <div style="font-weight:600;color:#1f2937;font-size:0.9rem;">{checkin['date']} • {checkin['check_in_type']}</div>
+                        <div style="color:#4b5563;font-size:0.85rem;margin-top:0.25rem;">{checkin['notes']}</div>
+                        <div style="color:#6b7280;font-size:0.75rem;margin-top:0.25rem;">— {checkin['staff_member']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    if st.button("🗑️", key=f"delete_checkin_{checkin['id']}", help="Delete this check-in"):
+                        if delete_checkin(checkin["id"]):
+                            st.success("Check-in deleted!")
+                            import time
+                            time.sleep(1)
+                            st.rerun()
         else:
             st.caption("No check-ins recorded yet.")
 
