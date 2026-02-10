@@ -69,6 +69,8 @@ AIRTABLE_API_KEY = st.secrets["airtable"]["api_key"]
 AIRTABLE_BASE_ID = st.secrets["airtable"]["base_id"]
 AIRTABLE_TABLE_NAME = st.secrets["airtable"]["table_name"]
 CHECKINS_TABLE_NAME = "Check-ins"
+STATUS_REPORTS_TABLE_NAME = "Status Reports"
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1cUr9l0mmdXkGqy0grAbR4GieNES5-hnRQiNkjnFg19U/edit?usp=sharing"
 
 # ============ HELPER FUNCTIONS ============
 
@@ -108,7 +110,10 @@ def fetch_fellows():
             "last_check_in": fields.get("Last Check-in", ""),
             "prior_role": fields.get("Prior Role", ""),
             "education": fields.get("Education", ""),
-            "notes": fields.get("Notes", "")
+            "notes": fields.get("Notes", ""),
+            "requires_monthly_reports": fields.get("Requires Monthly Reports", False),
+            "report_start_date": fields.get("Report Start Date", ""),
+            "report_end_month": fields.get("Report End Month", "")
         })
 
     return fellows
@@ -281,6 +286,194 @@ def delete_checkin(record_id):
         st.error(f"Failed to delete check-in: {response.status_code} - {response.text}")
         return False
     return True
+
+
+def fetch_status_reports(fellow_id):
+    """Fetch all status reports for a specific fellow"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{STATUS_REPORTS_TABLE_NAME}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    params = {
+        "sort[0][field]": "Month",
+        "sort[0][direction]": "asc"
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        return []
+
+    data = response.json()
+    reports = []
+
+    for record in data.get("records", []):
+        fields = record.get("fields", {})
+        fellow_ids = fields.get("Fellow", [])
+        if fellow_id in fellow_ids:
+            reports.append({
+                "id": record["id"],
+                "fellow": fellow_ids,
+                "month": fields.get("Month", ""),
+                "submitted": fields.get("Submitted", False),
+                "date_submitted": fields.get("Date Submitted", ""),
+                "notes": fields.get("Notes", "")
+            })
+
+    return reports
+
+
+def add_status_report(report_data):
+    """Add a new status report to Airtable"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{STATUS_REPORTS_TABLE_NAME}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    fields = {
+        "Fellow": [report_data.get("fellow_id")],
+        "Month": report_data.get("month"),
+        "Submitted": report_data.get("submitted", False),
+        "Date Submitted": report_data.get("date_submitted"),
+        "Notes": report_data.get("notes")
+    }
+
+    fields = {k: v for k, v in fields.items() if v is not None and v != ""}
+
+    response = requests.post(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Airtable error {response.status_code}: {response.text}")
+        return False
+    return True
+
+
+def update_status_report(record_id, submitted, date_submitted=None):
+    """Update a status report's submitted status"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{STATUS_REPORTS_TABLE_NAME}/{record_id}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    fields = {"Submitted": submitted}
+    if date_submitted:
+        fields["Date Submitted"] = date_submitted
+
+    response = requests.patch(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Failed to update status report: {response.status_code} - {response.text}")
+        return False
+    return True
+
+
+def get_required_report_months(fellow):
+    """Calculate which months a fellow needs to submit reports for"""
+    if not fellow.get("requires_monthly_reports") or not fellow.get("report_start_date"):
+        return []
+
+    # Parse start date
+    try:
+        start_date = datetime.strptime(fellow["report_start_date"], "%Y-%m-%d")
+    except:
+        return []
+
+    # Determine end month
+    if fellow.get("report_end_month"):
+        # Manual override
+        end_month_str = fellow["report_end_month"]
+    else:
+        # Calculate from fellow type
+        if "Senior" in (fellow.get("fellow_type") or ""):
+            end_month_str = "Nov 2026"
+        else:
+            end_month_str = "Sep 2026"
+
+    # Parse end month
+    month_map = {
+        "Feb 2026": (2026, 2), "Mar 2026": (2026, 3), "Apr 2026": (2026, 4),
+        "May 2026": (2026, 5), "Jun 2026": (2026, 6), "Jul 2026": (2026, 7),
+        "Aug 2026": (2026, 8), "Sep 2026": (2026, 9), "Oct 2026": (2026, 10),
+        "Nov 2026": (2026, 11), "Dec 2026": (2026, 12)
+    }
+
+    if end_month_str not in month_map:
+        return []
+
+    end_year, end_month = month_map[end_month_str]
+
+    # Generate list of required months
+    required_months = []
+    current_year = start_date.year
+    current_month = start_date.month
+
+    while (current_year < end_year) or (current_year == end_year and current_month <= end_month):
+        month_name = datetime(current_year, current_month, 1).strftime("%b %Y")
+        required_months.append(month_name)
+        current_month += 1
+        if current_month > 12:
+            current_month = 1
+            current_year += 1
+
+    return required_months
+
+
+def calculate_report_streak(reports, required_months):
+    """Calculate current submission streak and status"""
+    if not required_months:
+        return {"streak": 0, "gift_card_eligible": False, "at_risk": False, "reimbursements_paused": False, "missed_count": 0}
+
+    # Get submitted months
+    submitted_months = set()
+    for report in reports:
+        if report.get("submitted"):
+            submitted_months.add(report.get("month"))
+
+    # Calculate streak (consecutive submissions from most recent)
+    streak = 0
+    today = datetime.now()
+    current_month_str = today.strftime("%b %Y")
+
+    # Find months where the due date (last day of month) has passed
+    past_months = []
+    for month in required_months:
+        try:
+            month_date = datetime.strptime(month, "%b %Y")
+            # Get last day of month (the due date)
+            if month_date.month == 12:
+                last_day = datetime(month_date.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                last_day = datetime(month_date.year, month_date.month + 1, 1) - timedelta(days=1)
+            # Only count as past if due date has passed
+            if last_day < today:
+                past_months.append(month)
+        except:
+            continue
+
+    # Count streak from most recent
+    for month in reversed(past_months):
+        if month in submitted_months:
+            streak += 1
+        else:
+            break
+
+    # Count consecutive misses
+    missed_count = 0
+    for month in reversed(past_months):
+        if month not in submitted_months:
+            missed_count += 1
+        else:
+            break
+
+    return {
+        "streak": streak,
+        "gift_card_eligible": streak >= 3,
+        "at_risk": missed_count == 1,
+        "reimbursements_paused": missed_count >= 2,
+        "missed_count": missed_count
+    }
 
 
 def calculate_days_since(date_str):
@@ -727,6 +920,96 @@ def show_fellow_card(fellow):
         if fellow["notes"]:
             st.markdown("#### Notes")
             st.markdown(fellow["notes"])
+
+        # Monthly Status Reports (only if required)
+        if fellow.get("requires_monthly_reports"):
+            st.markdown("---")
+            st.markdown("#### Monthly Status Reports")
+
+            # Link to Google Sheet
+            st.markdown(f"[📊 View All Responses in Google Sheet]({GOOGLE_SHEET_URL})")
+
+            # Get required months and submitted reports
+            required_months = get_required_report_months(fellow)
+            status_reports = fetch_status_reports(fellow["id"])
+            streak_info = calculate_report_streak(status_reports, required_months)
+
+            # Status badges
+            badges_html = ""
+            if streak_info["streak"] > 0:
+                badges_html += f'<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#f97316;color:#ffffff;margin-right:0.5rem;">🔥 Streak: {streak_info["streak"]}</span>'
+            if streak_info["gift_card_eligible"]:
+                badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#22c55e;color:#ffffff;margin-right:0.5rem;">🎁 Gift Card Earned!</span>'
+            if streak_info["at_risk"]:
+                badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#eab308;color:#ffffff;margin-right:0.5rem;">⚠️ At Risk</span>'
+            if streak_info["reimbursements_paused"]:
+                badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#ef4444;color:#ffffff;margin-right:0.5rem;">🚫 Reimbursements Paused</span>'
+
+            if badges_html:
+                st.markdown(f'<div style="margin-bottom:1rem;">{badges_html}</div>', unsafe_allow_html=True)
+
+            # Get submitted months
+            submitted_months = {r["month"]: r for r in status_reports if r.get("submitted")}
+
+            # Display each required month
+            today = datetime.now()
+            for month in required_months:
+                try:
+                    month_date = datetime.strptime(month, "%b %Y")
+                    # Get last day of month for due date
+                    if month_date.month == 12:
+                        last_day = datetime(month_date.year + 1, 1, 1) - timedelta(days=1)
+                    else:
+                        last_day = datetime(month_date.year, month_date.month + 1, 1) - timedelta(days=1)
+                except:
+                    continue
+
+                is_submitted = month in submitted_months
+                is_overdue = not is_submitted and last_day < today
+                is_upcoming = not is_submitted and last_day >= today
+
+                if is_submitted:
+                    report = submitted_months[month]
+                    st.markdown(f'<div style="background-color:#dcfce7;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #22c55e;"><span style="color:#166534;font-weight:600;">✅ {month}</span> — Submitted {report.get("date_submitted", "")}</div>', unsafe_allow_html=True)
+                elif is_overdue:
+                    st.markdown(f'<div style="background-color:#fee2e2;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #ef4444;"><span style="color:#991b1b;font-weight:600;">❌ {month}</span> — OVERDUE (was due {last_day.strftime("%b %d")})</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div style="background-color:#f8fafc;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #94a3b8;"><span style="color:#475569;font-weight:600;">⬜ {month}</span> — Due {last_day.strftime("%b %d")}</div>', unsafe_allow_html=True)
+
+            # Mark as submitted button
+            st.markdown("##### Mark Report as Submitted")
+            with st.form(f"status_report_form_{fellow['id']}"):
+                month_to_mark = st.selectbox("Month", required_months)
+                date_submitted = st.date_input("Date Submitted", value=datetime.now())
+
+                if st.form_submit_button("Mark Submitted", use_container_width=True):
+                    # Check if report already exists for this month
+                    existing_report = None
+                    for r in status_reports:
+                        if r.get("month") == month_to_mark:
+                            existing_report = r
+                            break
+
+                    if existing_report:
+                        # Update existing
+                        if update_status_report(existing_report["id"], True, date_submitted.strftime("%Y-%m-%d")):
+                            st.success(f"Marked {month_to_mark} as submitted!")
+                            import time
+                            time.sleep(1)
+                            st.rerun()
+                    else:
+                        # Create new
+                        report_data = {
+                            "fellow_id": fellow["id"],
+                            "month": month_to_mark,
+                            "submitted": True,
+                            "date_submitted": date_submitted.strftime("%Y-%m-%d")
+                        }
+                        if add_status_report(report_data):
+                            st.success(f"Marked {month_to_mark} as submitted!")
+                            import time
+                            time.sleep(1)
+                            st.rerun()
 
         st.markdown("---")
 
