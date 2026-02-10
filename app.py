@@ -873,7 +873,25 @@ st.markdown("""
     [data-baseweb="select"] > div {
         background-color: white !important;
         color: #1f2937 !important;
-        border-color: #d1d5db !important;
+        border: 1px solid #d1d5db !important;
+    }
+
+    /* Force borders on select controls */
+    [data-baseweb="select"] [class*="control"] {
+        border: 1px solid #d1d5db !important;
+        background-color: white !important;
+    }
+
+    /* Text input borders */
+    .stTextInput > div > div {
+        border: 1px solid #d1d5db !important;
+        background-color: white !important;
+    }
+
+    /* Selectbox borders */
+    .stSelectbox > div > div {
+        border: 1px solid #d1d5db !important;
+        background-color: white !important;
     }
 
     /* Select dropdown text */
@@ -912,6 +930,35 @@ st.markdown("""
     input::placeholder,
     textarea::placeholder {
         color: #9ca3af !important;
+    }
+
+    /* Streamlit header toolbar icons */
+    [data-testid="stToolbar"],
+    [data-testid="stToolbar"] button,
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"],
+    header[data-testid="stHeader"] {
+        background-color: #f8fafc !important;
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stToolbar"] svg,
+    [data-testid="stToolbar"] button svg,
+    header[data-testid="stHeader"] svg {
+        color: #1f2937 !important;
+        stroke: #1f2937 !important;
+        fill: #1f2937 !important;
+    }
+
+    /* Main menu button */
+    [data-testid="stMainMenu"],
+    [data-testid="stMainMenu"] button {
+        color: #1f2937 !important;
+    }
+
+    [data-testid="stMainMenu"] svg {
+        color: #1f2937 !important;
+        stroke: #1f2937 !important;
     }
 </style>
 """, unsafe_allow_html=True)
