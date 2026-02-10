@@ -194,9 +194,8 @@ def fetch_checkins(fellow_id):
         "Content-Type": "application/json"
     }
 
-    # Filter by fellow record ID and sort by date descending
+    # Fetch all check-ins sorted by date descending
     params = {
-        "filterByFormula": f"FIND('{fellow_id}', ARRAYJOIN({{Fellow}}))",
         "sort[0][field]": "Date",
         "sort[0][direction]": "desc"
     }
@@ -211,14 +210,18 @@ def fetch_checkins(fellow_id):
 
     for record in data.get("records", []):
         fields = record.get("fields", {})
-        checkins.append({
-            "id": record["id"],
-            "fellow": fields.get("Fellow", ""),
-            "date": fields.get("Date", ""),
-            "check_in_type": fields.get("Check-in Type", ""),
-            "notes": fields.get("Notes", ""),
-            "staff_member": fields.get("Staff Member", "")
-        })
+        # Fellow field contains array of linked record IDs
+        fellow_ids = fields.get("Fellow", [])
+        # Only include check-ins for this fellow
+        if fellow_id in fellow_ids:
+            checkins.append({
+                "id": record["id"],
+                "fellow": fellow_ids,
+                "date": fields.get("Date", ""),
+                "check_in_type": fields.get("Check-in Type", ""),
+                "notes": fields.get("Notes", ""),
+                "staff_member": fields.get("Staff Member", "")
+            })
 
     return checkins
 
@@ -772,6 +775,8 @@ def show_fellow_details():
                             "staff_member": staff_member
                         }
                         if add_checkin(checkin_data):
+                            # Also update the fellow's Last Check-in date
+                            update_fellow(fellow["id"], {"last_check_in": checkin_date.strftime("%Y-%m-%d")})
                             st.success("Check-in logged!")
                             st.session_state.show_checkin_form = False
                             st.rerun()
