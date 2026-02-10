@@ -757,7 +757,7 @@ def show_fellow_details():
         if st.session_state.show_checkin_form:
             with st.form("checkin_form"):
                 checkin_date = st.date_input("Date", value=datetime.now())
-                checkin_type = st.selectbox("Check-in Type", ["Email", "Phone", "Video call", "In-person", "Slack", "Text"])
+                checkin_type = st.selectbox("Check-in Type", ["Email", "Phone", "Zoom", "In-person", "Slack", "Text"])
                 checkin_notes = st.text_area("Notes")
                 staff_member = st.text_input("Staff Member")
 
