@@ -59,8 +59,8 @@ if "show_add_form" not in st.session_state:
     st.session_state.show_add_form = False
 if "editing_fellow" not in st.session_state:
     st.session_state.editing_fellow = None
-if "expanded_fellow_id" not in st.session_state:
-    st.session_state.expanded_fellow_id = None
+if "modal_fellow_id" not in st.session_state:
+    st.session_state.modal_fellow_id = None
 if "show_checkin_form" not in st.session_state:
     st.session_state.show_checkin_form = False
 
@@ -669,6 +669,69 @@ st.markdown("""
     [data-testid="stExpanderDetails"] p {
         color: #1f2937 !important;
     }
+
+    /* Modal styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 50px;
+        overflow-y: auto;
+    }
+
+    .modal-container {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        width: 90%;
+        max-width: 700px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        margin-bottom: 50px;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        position: sticky;
+        top: 0;
+        background: white;
+        border-radius: 1rem 1rem 0 0;
+        z-index: 10;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #f3f4f6;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        font-size: 1.25rem;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-close-btn:hover {
+        background: #e5e7eb;
+        color: #1f2937;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -697,6 +760,12 @@ def main():
     # Fetch data
     with st.spinner("Loading fellows..."):
         fellows = fetch_fellows()
+
+    # Show modal if a fellow is selected
+    if st.session_state.modal_fellow_id:
+        selected_fellow = next((f for f in fellows if f["id"] == st.session_state.modal_fellow_id), None)
+        if selected_fellow:
+            show_fellow_modal(selected_fellow)
 
     if not fellows:
         st.warning("No fellows found. Add your first fellow to get started!")
@@ -820,9 +889,7 @@ def main():
 
 
 def show_fellow_card(fellow):
-    """Display a fellow card - collapsed or expanded"""
-    is_expanded = st.session_state.expanded_fellow_id == fellow["id"]
-
+    """Display a fellow card (collapsed view only - modal handles expanded view)"""
     days_since_checkin = calculate_days_since(fellow["last_check_in"])
     needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"]
 
@@ -865,251 +932,300 @@ def show_fellow_card(fellow):
         elif fellow["party"] == "Independent":
             party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#8b5cf6;color:#ffffff;">I</span>'
 
-    if is_expanded:
-        # EXPANDED VIEW
-        expanded_header = f'<div style="background-color:white;padding:1.5rem;border-radius:0.75rem;border:2px solid #3b82f6;margin-bottom:1rem;box-shadow:0 4px 6px rgba(0,0,0,0.1);"><div style="font-weight:700;font-size:1.5rem;margin-bottom:0.25rem;color:#1f2937;">{fellow["name"]}</div><div style="color:#6b7280;font-size:0.875rem;margin-bottom:0.75rem;">Cohort: {fellow["cohort"]} • {fellow["fellow_type"] or "Fellow"}</div><div style="margin-bottom:1rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}{type_html}{party_html}</div></div>'
-        st.markdown(expanded_header, unsafe_allow_html=True)
+    # CARD VIEW
+    office_html = ""
+    if fellow["office"]:
+        office_html = f'<div style="color:#374151;font-size:0.875rem;margin-bottom:0.25rem;">{fellow["office"]}</div>'
 
-        # Collapse button
-        if st.button("Collapse", key=f"collapse_{fellow['id']}", use_container_width=True):
-            st.session_state.expanded_fellow_id = None
+    term_html = ""
+    if fellow["start_date"] and fellow["end_date"]:
+        term_html = f'<div style="color:#6b7280;font-size:0.8rem;margin-bottom:0.25rem;">Fellowship Term: {fellow["start_date"]} - {fellow["end_date"]}</div>'
+
+    checkin_html = ""
+    if fellow["last_check_in"]:
+        checkin_html = f'<div style="color:#6b7280;font-size:0.8rem;">Last check-in: {fellow["last_check_in"]}</div>'
+
+    card_html = f'<div style="background-color:white;padding:1.25rem;border-radius:0.75rem;border:1px solid #e5e7eb;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div style="font-weight:600;font-size:1.1rem;margin-bottom:0.25rem;color:#1f2937;">{fellow["name"]}</div><div style="color:#6b7280;font-size:0.875rem;margin-bottom:0.75rem;">Cohort: {fellow["cohort"]}</div><div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}</div><div style="margin-bottom:0.5rem;">{type_html}{party_html}</div>{office_html}{term_html}{checkin_html}</div>'
+
+    st.markdown(card_html, unsafe_allow_html=True)
+
+    # Action buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
+            st.session_state.modal_fellow_id = fellow["id"]
+            st.rerun()
+    with col2:
+        if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
+            st.session_state.editing_fellow = fellow
+            st.session_state.show_add_form = False
             st.rerun()
 
-        # Two-column layout for details
-        col1, col2 = st.columns(2)
 
-        with col1:
-            st.markdown("#### Contact")
-            if fellow["email"]:
-                st.markdown(f"📧 [{fellow['email']}](mailto:{fellow['email']})")
-            if fellow["phone"]:
-                st.markdown(f"📞 {fellow['phone']}")
-            if fellow["linkedin"]:
-                st.markdown(f"🔗 [LinkedIn]({fellow['linkedin']})")
-            if not fellow["email"] and not fellow["phone"] and not fellow["linkedin"]:
-                st.caption("No contact info")
+@st.dialog("Fellow Details", width="large")
+def show_fellow_modal(fellow):
+    """Display fellow details in a modal dialog"""
+    days_since_checkin = calculate_days_since(fellow["last_check_in"])
+    needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"]
 
-            st.markdown("#### Fellowship Period")
-            if fellow["start_date"]:
-                st.markdown(f"**Start:** {fellow['start_date']}")
-            if fellow["end_date"]:
-                st.markdown(f"**End:** {fellow['end_date']}")
-            if fellow["last_check_in"]:
-                st.markdown(f"**Last Check-in:** {fellow['last_check_in']} ({days_since_checkin} days ago)")
+    # Status badge colors
+    status_colors = {
+        "on-track": ("#4ade80", "#166534"),
+        "Active": ("#4ade80", "#166534"),
+        "flagged": ("#fde047", "#854d0e"),
+        "Flagged": ("#fde047", "#854d0e"),
+        "ending-soon": ("#f87171", "#991b1b"),
+        "Ending Soon": ("#f87171", "#991b1b")
+    }
+    status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
+    bg_color, text_color = status_colors.get(fellow["status"], ("#4ade80", "#166534"))
 
-        with col2:
-            st.markdown("#### Placement")
-            if fellow["office"]:
-                st.markdown(f"**Office:** {fellow['office']}")
-            if fellow["chamber"]:
-                st.markdown(f"**Chamber:** {fellow['chamber']}")
-            if fellow["party"]:
-                st.markdown(f"**Party:** {fellow['party']}")
-            if not fellow["office"] and not fellow["chamber"]:
-                st.caption("No placement info")
+    # Fellow type badge
+    type_label = ""
+    type_bg = ""
+    type_text = "#ffffff"
+    if fellow["fellow_type"]:
+        type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
+        type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#93c5fd"
+        type_text = "#ffffff" if "Senior" in fellow["fellow_type"] else "#1e40af"
 
-            st.markdown("#### Background")
-            if fellow["prior_role"]:
-                st.markdown(f"**Prior Role:** {fellow['prior_role']}")
-            if fellow["education"]:
-                st.markdown(f"**Education:** {fellow['education']}")
-            if not fellow["prior_role"] and not fellow["education"]:
-                st.caption("No background info")
+    # Build badge HTML
+    checkin_badge = ""
+    if needs_checkin:
+        checkin_badge = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#eab308;color:#ffffff;margin-left:0.25rem;">Needs Check-in</span>'
 
-        # Notes section
-        if fellow["notes"]:
-            st.markdown("#### Notes")
-            st.markdown(fellow["notes"])
+    type_html = ""
+    if type_label:
+        type_html = f'<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{type_bg};color:{type_text};margin-right:0.25rem;">{type_label}</span>'
 
-        # Monthly Status Reports (only if required)
-        if fellow.get("requires_monthly_reports"):
-            st.markdown("---")
-            st.markdown("#### Monthly Status Reports")
+    party_html = ""
+    if fellow["party"]:
+        if fellow["party"] == "Republican":
+            party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#ef4444;color:#ffffff;">R</span>'
+        elif fellow["party"] == "Democrat":
+            party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#3b82f6;color:#ffffff;">D</span>'
+        elif fellow["party"] == "Independent":
+            party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#8b5cf6;color:#ffffff;">I</span>'
 
-            # Link to Google Sheet
-            st.markdown(f"[📊 View All Responses in Google Sheet]({GOOGLE_SHEET_URL})")
+    # Modal header
+    st.markdown(f"## {fellow['name']}")
+    st.markdown(f"**{fellow['cohort']}** • {fellow['fellow_type'] or 'Fellow'}")
 
-            # Get required months and submitted reports
-            required_months = get_required_report_months(fellow)
-            status_reports = fetch_status_reports(fellow["id"])
-            streak_info = calculate_report_streak(status_reports, required_months)
+    badges_html = f'<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}{type_html}{party_html}'
+    st.markdown(f'<div style="margin-bottom:1rem;">{badges_html}</div>', unsafe_allow_html=True)
 
-            # Status badges
-            badges_html = ""
-            if streak_info["streak"] > 0:
-                badges_html += f'<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#f97316;color:#ffffff;margin-right:0.5rem;">🔥 Streak: {streak_info["streak"]}</span>'
-            if streak_info["gift_card_eligible"]:
-                badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#22c55e;color:#ffffff;margin-right:0.5rem;">🎁 Gift Card Earned!</span>'
-            if streak_info["at_risk"]:
-                badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#eab308;color:#ffffff;margin-right:0.5rem;">⚠️ At Risk</span>'
-            if streak_info["reimbursements_paused"]:
-                badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#ef4444;color:#ffffff;margin-right:0.5rem;">🚫 Reimbursements Paused</span>'
+    st.markdown("---")
 
-            if badges_html:
-                st.markdown(f'<div style="margin-bottom:1rem;">{badges_html}</div>', unsafe_allow_html=True)
+    # Two-column layout for details
+    col1, col2 = st.columns(2)
 
-            # Get submitted months
-            submitted_months = {r["month"]: r for r in status_reports if r.get("submitted")}
+    with col1:
+        st.markdown("#### Contact")
+        if fellow["email"]:
+            st.markdown(f"📧 [{fellow['email']}](mailto:{fellow['email']})")
+        if fellow["phone"]:
+            st.markdown(f"📞 {fellow['phone']}")
+        if fellow["linkedin"]:
+            st.markdown(f"🔗 [LinkedIn]({fellow['linkedin']})")
+        if not fellow["email"] and not fellow["phone"] and not fellow["linkedin"]:
+            st.caption("No contact info")
 
-            # Display each required month
-            today = datetime.now()
-            for month in required_months:
-                try:
-                    month_date = datetime.strptime(month, "%b %Y")
-                    # Get last day of month for due date
-                    if month_date.month == 12:
-                        last_day = datetime(month_date.year + 1, 1, 1) - timedelta(days=1)
-                    else:
-                        last_day = datetime(month_date.year, month_date.month + 1, 1) - timedelta(days=1)
-                except:
-                    continue
+        st.markdown("#### Fellowship Period")
+        if fellow["start_date"]:
+            st.markdown(f"**Start:** {fellow['start_date']}")
+        if fellow["end_date"]:
+            st.markdown(f"**End:** {fellow['end_date']}")
+        if fellow["last_check_in"]:
+            st.markdown(f"**Last Check-in:** {fellow['last_check_in']} ({days_since_checkin} days ago)")
 
-                is_submitted = month in submitted_months
-                is_overdue = not is_submitted and last_day < today
-                is_upcoming = not is_submitted and last_day >= today
+    with col2:
+        st.markdown("#### Placement")
+        if fellow["office"]:
+            st.markdown(f"**Office:** {fellow['office']}")
+        if fellow["chamber"]:
+            st.markdown(f"**Chamber:** {fellow['chamber']}")
+        if fellow["party"]:
+            st.markdown(f"**Party:** {fellow['party']}")
+        if not fellow["office"] and not fellow["chamber"]:
+            st.caption("No placement info")
 
-                if is_submitted:
-                    report = submitted_months[month]
-                    st.markdown(f'<div style="background-color:#dcfce7;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #22c55e;"><span style="color:#166534;font-weight:600;">✅ {month}</span> — Submitted {report.get("date_submitted", "")}</div>', unsafe_allow_html=True)
-                elif is_overdue:
-                    st.markdown(f'<div style="background-color:#fee2e2;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #ef4444;"><span style="color:#991b1b;font-weight:600;">❌ {month}</span> — OVERDUE (was due {last_day.strftime("%b %d")})</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown(f'<div style="background-color:#f8fafc;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #94a3b8;"><span style="color:#475569;font-weight:600;">⬜ {month}</span> — Due {last_day.strftime("%b %d")}</div>', unsafe_allow_html=True)
+        st.markdown("#### Background")
+        if fellow["prior_role"]:
+            st.markdown(f"**Prior Role:** {fellow['prior_role']}")
+        if fellow["education"]:
+            st.markdown(f"**Education:** {fellow['education']}")
+        if not fellow["prior_role"] and not fellow["education"]:
+            st.caption("No background info")
 
-            # Mark as submitted button
-            st.markdown("##### Mark Report as Submitted")
-            with st.form(f"status_report_form_{fellow['id']}"):
-                month_to_mark = st.selectbox("Month", required_months)
-                date_submitted = st.date_input("Date Submitted", value=datetime.now())
+    # Notes section
+    if fellow["notes"]:
+        st.markdown("#### Notes")
+        st.markdown(fellow["notes"])
 
-                if st.form_submit_button("Mark Submitted", use_container_width=True):
-                    # Check if report already exists for this month
-                    existing_report = None
-                    for r in status_reports:
-                        if r.get("month") == month_to_mark:
-                            existing_report = r
-                            break
-
-                    if existing_report:
-                        # Update existing
-                        if update_status_report(existing_report["id"], True, date_submitted.strftime("%Y-%m-%d")):
-                            st.success(f"Marked {month_to_mark} as submitted!")
-                            import time
-                            time.sleep(1)
-                            st.rerun()
-                    else:
-                        # Create new
-                        report_data = {
-                            "fellow_id": fellow["id"],
-                            "month": month_to_mark,
-                            "submitted": True,
-                            "date_submitted": date_submitted.strftime("%Y-%m-%d")
-                        }
-                        if add_status_report(report_data):
-                            st.success(f"Marked {month_to_mark} as submitted!")
-                            import time
-                            time.sleep(1)
-                            st.rerun()
-
+    # Monthly Status Reports (only if required)
+    if fellow.get("requires_monthly_reports"):
         st.markdown("---")
+        st.markdown("#### Monthly Status Reports")
 
-        # Check-in History
-        st.markdown("#### Check-in History")
+        # Link to Google Sheet
+        st.markdown(f"[📊 View All Responses in Google Sheet]({GOOGLE_SHEET_URL})")
 
-        if st.button("+ Log Check-in", key=f"log_checkin_{fellow['id']}", use_container_width=True):
-            st.session_state.show_checkin_form = True
-            st.rerun()
+        # Get required months and submitted reports
+        required_months = get_required_report_months(fellow)
+        status_reports = fetch_status_reports(fellow["id"])
+        streak_info = calculate_report_streak(status_reports, required_months)
 
-        # Show check-in form if toggled
-        if st.session_state.show_checkin_form:
-            with st.form(f"checkin_form_{fellow['id']}"):
-                checkin_date = st.date_input("Date", value=datetime.now())
-                checkin_type = st.selectbox("Check-in Type", ["Email", "Phone", "Zoom", "In-person", "Slack", "Text"])
-                checkin_notes = st.text_area("Notes")
-                staff_member = st.text_input("Staff Member")
+        # Status badges
+        report_badges_html = ""
+        if streak_info["streak"] > 0:
+            report_badges_html += f'<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#f97316;color:#ffffff;margin-right:0.5rem;">🔥 Streak: {streak_info["streak"]}</span>'
+        if streak_info["gift_card_eligible"]:
+            report_badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#22c55e;color:#ffffff;margin-right:0.5rem;">🎁 Gift Card Earned!</span>'
+        if streak_info["at_risk"]:
+            report_badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#eab308;color:#ffffff;margin-right:0.5rem;">⚠️ At Risk</span>'
+        if streak_info["reimbursements_paused"]:
+            report_badges_html += '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#ef4444;color:#ffffff;margin-right:0.5rem;">🚫 Reimbursements Paused</span>'
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.form_submit_button("Save", use_container_width=True):
-                        checkin_data = {
-                            "fellow_id": fellow["id"],
-                            "date": checkin_date.strftime("%Y-%m-%d"),
-                            "check_in_type": checkin_type,
-                            "notes": checkin_notes,
-                            "staff_member": staff_member
-                        }
-                        if add_checkin(checkin_data):
-                            if update_fellow_checkin(fellow["id"], checkin_date.strftime("%Y-%m-%d")):
-                                st.success("Check-in logged!")
-                            else:
-                                st.warning("Check-in logged but failed to update Last Check-in date")
-                            st.session_state.show_checkin_form = False
-                            import time
-                            time.sleep(2)
-                            st.rerun()
-                with col2:
-                    if st.form_submit_button("Cancel", use_container_width=True):
-                        st.session_state.show_checkin_form = False
-                        st.rerun()
+        if report_badges_html:
+            st.markdown(f'<div style="margin-bottom:1rem;">{report_badges_html}</div>', unsafe_allow_html=True)
 
-        # Display check-in history
-        checkins = fetch_checkins(fellow["id"])
-        if checkins:
-            for checkin in checkins:
-                st.markdown(f"""
-                <div style="background-color:#f8fafc;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.25rem;border-left:3px solid #3b82f6;">
-                    <div style="font-weight:600;color:#1f2937;font-size:0.9rem;">{checkin['date']} • {checkin['check_in_type']}</div>
-                    <div style="color:#4b5563;font-size:0.85rem;margin-top:0.25rem;">{checkin['notes']}</div>
-                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.25rem;">— {checkin['staff_member']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button("Delete", key=f"delete_checkin_{checkin['id']}", use_container_width=True):
-                    if delete_checkin(checkin["id"]):
-                        st.success("Check-in deleted!")
+        # Get submitted months
+        submitted_months = {r["month"]: r for r in status_reports if r.get("submitted")}
+
+        # Display each required month
+        today = datetime.now()
+        for month in required_months:
+            try:
+                month_date = datetime.strptime(month, "%b %Y")
+                # Get last day of month for due date
+                if month_date.month == 12:
+                    last_day = datetime(month_date.year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    last_day = datetime(month_date.year, month_date.month + 1, 1) - timedelta(days=1)
+            except:
+                continue
+
+            is_submitted = month in submitted_months
+            is_overdue = not is_submitted and last_day < today
+
+            if is_submitted:
+                report = submitted_months[month]
+                st.markdown(f'<div style="background-color:#dcfce7;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #22c55e;"><span style="color:#166534;font-weight:600;">✅ {month}</span> — Submitted {report.get("date_submitted", "")}</div>', unsafe_allow_html=True)
+            elif is_overdue:
+                st.markdown(f'<div style="background-color:#fee2e2;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #ef4444;"><span style="color:#991b1b;font-weight:600;">❌ {month}</span> — OVERDUE (was due {last_day.strftime("%b %d")})</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div style="background-color:#f8fafc;padding:0.5rem 0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #94a3b8;"><span style="color:#475569;font-weight:600;">⬜ {month}</span> — Due {last_day.strftime("%b %d")}</div>', unsafe_allow_html=True)
+
+        # Mark as submitted button
+        st.markdown("##### Mark Report as Submitted")
+        with st.form(f"status_report_form_{fellow['id']}"):
+            month_to_mark = st.selectbox("Month", required_months)
+            date_submitted = st.date_input("Date Submitted", value=datetime.now())
+
+            if st.form_submit_button("Mark Submitted", use_container_width=True):
+                # Check if report already exists for this month
+                existing_report = None
+                for r in status_reports:
+                    if r.get("month") == month_to_mark:
+                        existing_report = r
+                        break
+
+                if existing_report:
+                    # Update existing
+                    if update_status_report(existing_report["id"], True, date_submitted.strftime("%Y-%m-%d")):
+                        st.success(f"Marked {month_to_mark} as submitted!")
                         import time
                         time.sleep(1)
                         st.rerun()
-                st.markdown("<div style='margin-bottom:1rem;'></div>", unsafe_allow_html=True)
-        else:
-            st.caption("No check-ins recorded yet.")
+                else:
+                    # Create new
+                    report_data = {
+                        "fellow_id": fellow["id"],
+                        "month": month_to_mark,
+                        "submitted": True,
+                        "date_submitted": date_submitted.strftime("%Y-%m-%d")
+                    }
+                    if add_status_report(report_data):
+                        st.success(f"Marked {month_to_mark} as submitted!")
+                        import time
+                        time.sleep(1)
+                        st.rerun()
 
-        st.markdown("---")
+    st.markdown("---")
 
-        # Edit button
-        if st.button("Edit Fellow", key=f"edit_expanded_{fellow['id']}", use_container_width=True, type="primary"):
-            st.session_state.editing_fellow = fellow
-            st.session_state.expanded_fellow_id = None
-            st.rerun()
+    # Check-in History
+    st.markdown("#### Check-in History")
 
+    if st.button("+ Log Check-in", key=f"log_checkin_{fellow['id']}", use_container_width=True):
+        st.session_state.show_checkin_form = True
+        st.rerun()
+
+    # Show check-in form if toggled
+    if st.session_state.show_checkin_form:
+        with st.form(f"checkin_form_{fellow['id']}"):
+            checkin_date = st.date_input("Date", value=datetime.now())
+            checkin_type = st.selectbox("Check-in Type", ["Email", "Phone", "Zoom", "In-person", "Slack", "Text"])
+            checkin_notes = st.text_area("Notes")
+            staff_member = st.text_input("Staff Member")
+
+            form_col1, form_col2 = st.columns(2)
+            with form_col1:
+                if st.form_submit_button("Save", use_container_width=True):
+                    checkin_data = {
+                        "fellow_id": fellow["id"],
+                        "date": checkin_date.strftime("%Y-%m-%d"),
+                        "check_in_type": checkin_type,
+                        "notes": checkin_notes,
+                        "staff_member": staff_member
+                    }
+                    if add_checkin(checkin_data):
+                        if update_fellow_checkin(fellow["id"], checkin_date.strftime("%Y-%m-%d")):
+                            st.success("Check-in logged!")
+                        else:
+                            st.warning("Check-in logged but failed to update Last Check-in date")
+                        st.session_state.show_checkin_form = False
+                        import time
+                        time.sleep(2)
+                        st.rerun()
+            with form_col2:
+                if st.form_submit_button("Cancel", use_container_width=True):
+                    st.session_state.show_checkin_form = False
+                    st.rerun()
+
+    # Display check-in history
+    checkins = fetch_checkins(fellow["id"])
+    if checkins:
+        for checkin in checkins:
+            st.markdown(f"""
+            <div style="background-color:#f8fafc;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.25rem;border-left:3px solid #3b82f6;">
+                <div style="font-weight:600;color:#1f2937;font-size:0.9rem;">{checkin['date']} • {checkin['check_in_type']}</div>
+                <div style="color:#4b5563;font-size:0.85rem;margin-top:0.25rem;">{checkin['notes']}</div>
+                <div style="color:#6b7280;font-size:0.75rem;margin-top:0.25rem;">— {checkin['staff_member']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Delete", key=f"delete_checkin_{checkin['id']}", use_container_width=True):
+                if delete_checkin(checkin["id"]):
+                    st.success("Check-in deleted!")
+                    import time
+                    time.sleep(1)
+                    st.rerun()
+            st.markdown("<div style='margin-bottom:1rem;'></div>", unsafe_allow_html=True)
     else:
-        # COLLAPSED VIEW (original card)
-        office_html = ""
-        if fellow["office"]:
-            office_html = f'<div style="color:#374151;font-size:0.875rem;margin-bottom:0.25rem;">{fellow["office"]}</div>'
+        st.caption("No check-ins recorded yet.")
 
-        term_html = ""
-        if fellow["start_date"] and fellow["end_date"]:
-            term_html = f'<div style="color:#6b7280;font-size:0.8rem;margin-bottom:0.25rem;">Fellowship Term: {fellow["start_date"]} - {fellow["end_date"]}</div>'
+    st.markdown("---")
 
-        checkin_html = ""
-        if fellow["last_check_in"]:
-            checkin_html = f'<div style="color:#6b7280;font-size:0.8rem;">Last check-in: {fellow["last_check_in"]}</div>'
-
-        card_html = f'<div style="background-color:white;padding:1.25rem;border-radius:0.75rem;border:1px solid #e5e7eb;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div style="font-weight:600;font-size:1.1rem;margin-bottom:0.25rem;color:#1f2937;">{fellow["name"]}</div><div style="color:#6b7280;font-size:0.875rem;margin-bottom:0.75rem;">Cohort: {fellow["cohort"]}</div><div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}</div><div style="margin-bottom:0.5rem;">{type_html}{party_html}</div>{office_html}{term_html}{checkin_html}</div>'
-
-        st.markdown(card_html, unsafe_allow_html=True)
-
-        # Action buttons
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
-                st.session_state.expanded_fellow_id = fellow["id"]
-                st.rerun()
-        with col2:
-            if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
-                st.session_state.editing_fellow = fellow
-                st.session_state.show_add_form = False
-                st.rerun()
+    # Action buttons at bottom
+    btn_col1, btn_col2 = st.columns(2)
+    with btn_col1:
+        if st.button("Edit Fellow", key=f"edit_modal_{fellow['id']}", use_container_width=True, type="primary"):
+            st.session_state.editing_fellow = fellow
+            st.session_state.modal_fellow_id = None
+            st.rerun()
+    with btn_col2:
+        if st.button("Close", key=f"close_modal_{fellow['id']}", use_container_width=True):
+            st.session_state.modal_fellow_id = None
+            st.rerun()
 
 
 def show_fellow_form():
