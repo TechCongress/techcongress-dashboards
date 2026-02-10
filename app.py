@@ -59,8 +59,8 @@ if "show_add_form" not in st.session_state:
     st.session_state.show_add_form = False
 if "editing_fellow" not in st.session_state:
     st.session_state.editing_fellow = None
-if "selected_fellow" not in st.session_state:
-    st.session_state.selected_fellow = None
+if "expanded_fellow_id" not in st.session_state:
+    st.session_state.expanded_fellow_id = None
 if "show_checkin_form" not in st.session_state:
     st.session_state.show_checkin_form = False
 
@@ -619,10 +619,6 @@ def main():
     if st.session_state.show_add_form or st.session_state.editing_fellow:
         show_fellow_form()
 
-    # Show selected fellow details
-    if st.session_state.selected_fellow:
-        show_fellow_details()
-
     # Display fellows in cards
     cols = st.columns(3)
     for idx, fellow in enumerate(filtered_fellows):
@@ -631,12 +627,13 @@ def main():
 
 
 def show_fellow_card(fellow):
-    """Display a fellow card"""
+    """Display a fellow card - collapsed or expanded"""
+    is_expanded = st.session_state.expanded_fellow_id == fellow["id"]
+
     days_since_checkin = calculate_days_since(fellow["last_check_in"])
     needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"]
-    days_until_end = calculate_days_until(fellow["end_date"])
 
-    # Status badge colors - handle both Airtable values and internal values
+    # Status badge colors
     status_colors = {
         "on-track": ("#4ade80", "#166534"),
         "Active": ("#4ade80", "#166534"),
@@ -657,7 +654,7 @@ def show_fellow_card(fellow):
         type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#93c5fd"
         type_text = "#ffffff" if "Senior" in fellow["fellow_type"] else "#1e40af"
 
-    # Build parts separately
+    # Build badge HTML
     checkin_badge = ""
     if needs_checkin:
         checkin_badge = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#eab308;color:#ffffff;margin-left:0.25rem;">Needs Check-in</span>'
@@ -666,7 +663,6 @@ def show_fellow_card(fellow):
     if type_label:
         type_html = f'<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{type_bg};color:{type_text};margin-right:0.25rem;">{type_label}</span>'
 
-    # Party badge
     party_html = ""
     if fellow["party"]:
         if fellow["party"] == "Republican":
@@ -676,106 +672,59 @@ def show_fellow_card(fellow):
         elif fellow["party"] == "Independent":
             party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#8b5cf6;color:#ffffff;">I</span>'
 
-    office_html = ""
-    if fellow["office"]:
-        office_html = f'<div style="color:#374151;font-size:0.875rem;margin-bottom:0.25rem;">{fellow["office"]}</div>'
+    if is_expanded:
+        # EXPANDED VIEW
+        expanded_header = f'<div style="background-color:white;padding:1.5rem;border-radius:0.75rem;border:2px solid #3b82f6;margin-bottom:1rem;box-shadow:0 4px 6px rgba(0,0,0,0.1);"><div style="font-weight:700;font-size:1.5rem;margin-bottom:0.25rem;color:#1f2937;">{fellow["name"]}</div><div style="color:#6b7280;font-size:0.875rem;margin-bottom:0.75rem;">Cohort: {fellow["cohort"]} • {fellow["fellow_type"] or "Fellow"}</div><div style="margin-bottom:1rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}{type_html}{party_html}</div></div>'
+        st.markdown(expanded_header, unsafe_allow_html=True)
 
-    term_html = ""
-    if fellow["start_date"] and fellow["end_date"]:
-        term_html = f'<div style="color:#6b7280;font-size:0.8rem;margin-bottom:0.25rem;">Fellowship Term: {fellow["start_date"]} - {fellow["end_date"]}</div>'
-
-    checkin_html = ""
-    if fellow["last_check_in"]:
-        checkin_html = f'<div style="color:#6b7280;font-size:0.8rem;">Last check-in: {fellow["last_check_in"]}</div>'
-
-    card_html = f'<div style="background-color:white;padding:1.25rem;border-radius:0.75rem;border:1px solid #e5e7eb;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div style="font-weight:600;font-size:1.1rem;margin-bottom:0.25rem;color:#1f2937;">{fellow["name"]}</div><div style="color:#6b7280;font-size:0.875rem;margin-bottom:0.75rem;">Cohort: {fellow["cohort"]}</div><div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}</div><div style="margin-bottom:0.5rem;">{type_html}{party_html}</div>{office_html}{term_html}{checkin_html}</div>'
-
-    st.markdown(card_html, unsafe_allow_html=True)
-
-    # Action buttons
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
-            st.session_state.selected_fellow = fellow
-            st.rerun()
-    with col2:
-        if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
-            st.session_state.editing_fellow = fellow
-            st.session_state.show_add_form = False
+        # Collapse button
+        if st.button("Collapse", key=f"collapse_{fellow['id']}", use_container_width=True):
+            st.session_state.expanded_fellow_id = None
             st.rerun()
 
+        # Two-column layout for details
+        col1, col2 = st.columns(2)
 
-def show_fellow_details():
-    """Show detailed view of a fellow"""
-    fellow = st.session_state.selected_fellow
+        with col1:
+            st.markdown("#### Contact")
+            if fellow["email"]:
+                st.markdown(f"📧 [{fellow['email']}](mailto:{fellow['email']})")
+            if fellow["phone"]:
+                st.markdown(f"📞 {fellow['phone']}")
+            if fellow["linkedin"]:
+                st.markdown(f"🔗 [LinkedIn]({fellow['linkedin']})")
+            if not fellow["email"] and not fellow["phone"] and not fellow["linkedin"]:
+                st.caption("No contact info")
 
-    with st.sidebar:
-        st.markdown("### Fellow Details")
+            st.markdown("#### Fellowship Period")
+            if fellow["start_date"]:
+                st.markdown(f"**Start:** {fellow['start_date']}")
+            if fellow["end_date"]:
+                st.markdown(f"**End:** {fellow['end_date']}")
+            if fellow["last_check_in"]:
+                st.markdown(f"**Last Check-in:** {fellow['last_check_in']} ({days_since_checkin} days ago)")
 
-        if st.button("Close", use_container_width=True):
-            st.session_state.selected_fellow = None
-            st.rerun()
+        with col2:
+            st.markdown("#### Placement")
+            if fellow["office"]:
+                st.markdown(f"**Office:** {fellow['office']}")
+            if fellow["chamber"]:
+                st.markdown(f"**Chamber:** {fellow['chamber']}")
+            if fellow["party"]:
+                st.markdown(f"**Party:** {fellow['party']}")
+            if not fellow["office"] and not fellow["chamber"]:
+                st.caption("No placement info")
 
-        st.markdown("---")
+            st.markdown("#### Background")
+            if fellow["prior_role"]:
+                st.markdown(f"**Prior Role:** {fellow['prior_role']}")
+            if fellow["education"]:
+                st.markdown(f"**Education:** {fellow['education']}")
+            if not fellow["prior_role"] and not fellow["education"]:
+                st.caption("No background info")
 
-        # Name and avatar
-        st.markdown(f"## {fellow['name']}")
-
-        if fellow["cohort"]:
-            st.caption(f"Cohort: {fellow['cohort']}")
-
-        # Status
-        status_label = {"on-track": "Active", "flagged": "Flagged", "ending-soon": "Ending Soon"}.get(fellow["status"], fellow["status"])
-        st.markdown(f"**Status:** {status_label}")
-
-        if fellow["fellow_type"]:
-            st.markdown(f"**Fellow Type:** {fellow['fellow_type']}")
-
-        st.markdown("---")
-
-        # Contact info
-        st.markdown("#### Contact")
-        if fellow["email"]:
-            st.markdown(f"[{fellow['email']}](mailto:{fellow['email']})")
-        if fellow["phone"]:
-            st.markdown(f"{fellow['phone']}")
-        if fellow["linkedin"]:
-            st.markdown(f"[LinkedIn]({fellow['linkedin']})")
-
-        st.markdown("---")
-
-        # Placement
-        st.markdown("#### Placement")
-        if fellow["office"]:
-            st.markdown(f"{fellow['office']}")
-        if fellow["chamber"]:
-            st.markdown(f"**Chamber:** {fellow['chamber']}")
-        if fellow["party"]:
-            st.markdown(f"**Party:** {fellow['party']}")
-
-        st.markdown("---")
-
-        # Dates
-        st.markdown("#### Fellowship Period")
-        if fellow["start_date"]:
-            st.markdown(f"**Start:** {fellow['start_date']}")
-        if fellow["end_date"]:
-            st.markdown(f"**End:** {fellow['end_date']}")
-        if fellow["last_check_in"]:
-            days_since = calculate_days_since(fellow["last_check_in"])
-            st.markdown(f"**Last Check-in:** {fellow['last_check_in']} ({days_since} days ago)")
-
-        st.markdown("---")
-
-        # Background
-        st.markdown("#### Background")
-        if fellow["prior_role"]:
-            st.markdown(f"**Prior Role:** {fellow['prior_role']}")
-        if fellow["education"]:
-            st.markdown(f"**Education:** {fellow['education']}")
-
+        # Notes section
         if fellow["notes"]:
-            st.markdown("---")
             st.markdown("#### Notes")
             st.markdown(fellow["notes"])
 
@@ -784,13 +733,13 @@ def show_fellow_details():
         # Check-in History
         st.markdown("#### Check-in History")
 
-        if st.button("+ Log Check-in", use_container_width=True):
+        if st.button("+ Log Check-in", key=f"log_checkin_{fellow['id']}", use_container_width=True):
             st.session_state.show_checkin_form = True
             st.rerun()
 
         # Show check-in form if toggled
         if st.session_state.show_checkin_form:
-            with st.form("checkin_form"):
+            with st.form(f"checkin_form_{fellow['id']}"):
                 checkin_date = st.date_input("Date", value=datetime.now())
                 checkin_type = st.selectbox("Check-in Type", ["Email", "Phone", "Zoom", "In-person", "Slack", "Text"])
                 checkin_notes = st.text_area("Notes")
@@ -807,14 +756,13 @@ def show_fellow_details():
                             "staff_member": staff_member
                         }
                         if add_checkin(checkin_data):
-                            # Also update the fellow's Last Check-in date
                             if update_fellow_checkin(fellow["id"], checkin_date.strftime("%Y-%m-%d")):
                                 st.success("Check-in logged!")
                             else:
                                 st.warning("Check-in logged but failed to update Last Check-in date")
                             st.session_state.show_checkin_form = False
                             import time
-                            time.sleep(2)  # Give time to see any error messages
+                            time.sleep(2)
                             st.rerun()
                 with col2:
                     if st.form_submit_button("Cancel", use_container_width=True):
@@ -844,10 +792,41 @@ def show_fellow_details():
 
         st.markdown("---")
 
-        if st.button("Edit Fellow", use_container_width=True, type="primary"):
+        # Edit button
+        if st.button("Edit Fellow", key=f"edit_expanded_{fellow['id']}", use_container_width=True, type="primary"):
             st.session_state.editing_fellow = fellow
-            st.session_state.selected_fellow = None
+            st.session_state.expanded_fellow_id = None
             st.rerun()
+
+    else:
+        # COLLAPSED VIEW (original card)
+        office_html = ""
+        if fellow["office"]:
+            office_html = f'<div style="color:#374151;font-size:0.875rem;margin-bottom:0.25rem;">{fellow["office"]}</div>'
+
+        term_html = ""
+        if fellow["start_date"] and fellow["end_date"]:
+            term_html = f'<div style="color:#6b7280;font-size:0.8rem;margin-bottom:0.25rem;">Fellowship Term: {fellow["start_date"]} - {fellow["end_date"]}</div>'
+
+        checkin_html = ""
+        if fellow["last_check_in"]:
+            checkin_html = f'<div style="color:#6b7280;font-size:0.8rem;">Last check-in: {fellow["last_check_in"]}</div>'
+
+        card_html = f'<div style="background-color:white;padding:1.25rem;border-radius:0.75rem;border:1px solid #e5e7eb;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div style="font-weight:600;font-size:1.1rem;margin-bottom:0.25rem;color:#1f2937;">{fellow["name"]}</div><div style="color:#6b7280;font-size:0.875rem;margin-bottom:0.75rem;">Cohort: {fellow["cohort"]}</div><div style="margin-bottom:0.5rem;"><span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:{bg_color};color:{text_color};">{status_label}</span>{checkin_badge}</div><div style="margin-bottom:0.5rem;">{type_html}{party_html}</div>{office_html}{term_html}{checkin_html}</div>'
+
+        st.markdown(card_html, unsafe_allow_html=True)
+
+        # Action buttons
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("View", key=f"view_{fellow['id']}", use_container_width=True):
+                st.session_state.expanded_fellow_id = fellow["id"]
+                st.rerun()
+        with col2:
+            if st.button("Edit", key=f"edit_{fellow['id']}", use_container_width=True):
+                st.session_state.editing_fellow = fellow
+                st.session_state.show_add_form = False
+                st.rerun()
 
 
 def show_fellow_form():
