@@ -873,25 +873,6 @@ st.markdown("""
     [data-baseweb="select"] > div {
         background-color: white !important;
         color: #1f2937 !important;
-        border: 1px solid #d1d5db !important;
-    }
-
-    /* Force borders on select controls */
-    [data-baseweb="select"] [class*="control"] {
-        border: 1px solid #d1d5db !important;
-        background-color: white !important;
-    }
-
-    /* Text input borders */
-    .stTextInput > div > div {
-        border: 1px solid #d1d5db !important;
-        background-color: white !important;
-    }
-
-    /* Selectbox borders */
-    .stSelectbox > div > div {
-        border: 1px solid #d1d5db !important;
-        background-color: white !important;
     }
 
     /* Select dropdown text */
