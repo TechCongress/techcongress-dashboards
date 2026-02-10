@@ -825,22 +825,20 @@ def show_fellow_details():
         checkins = fetch_checkins(fellow["id"])
         if checkins:
             for checkin in checkins:
-                col1, col2 = st.columns([5, 1])
-                with col1:
-                    st.markdown(f"""
-                    <div style="background-color:#f8fafc;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;border-left:3px solid #3b82f6;">
-                        <div style="font-weight:600;color:#1f2937;font-size:0.9rem;">{checkin['date']} • {checkin['check_in_type']}</div>
-                        <div style="color:#4b5563;font-size:0.85rem;margin-top:0.25rem;">{checkin['notes']}</div>
-                        <div style="color:#6b7280;font-size:0.75rem;margin-top:0.25rem;">— {checkin['staff_member']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    if st.button("Delete", key=f"delete_checkin_{checkin['id']}"):
-                        if delete_checkin(checkin["id"]):
-                            st.success("Check-in deleted!")
-                            import time
-                            time.sleep(1)
-                            st.rerun()
+                st.markdown(f"""
+                <div style="background-color:#f8fafc;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.25rem;border-left:3px solid #3b82f6;">
+                    <div style="font-weight:600;color:#1f2937;font-size:0.9rem;">{checkin['date']} • {checkin['check_in_type']}</div>
+                    <div style="color:#4b5563;font-size:0.85rem;margin-top:0.25rem;">{checkin['notes']}</div>
+                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.25rem;">— {checkin['staff_member']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button("Delete", key=f"delete_checkin_{checkin['id']}", use_container_width=True):
+                    if delete_checkin(checkin["id"]):
+                        st.success("Check-in deleted!")
+                        import time
+                        time.sleep(1)
+                        st.rerun()
+                st.markdown("<div style='margin-bottom:1rem;'></div>", unsafe_allow_html=True)
         else:
             st.caption("No check-ins recorded yet.")
 
