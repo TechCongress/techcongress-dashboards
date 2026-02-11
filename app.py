@@ -1035,7 +1035,7 @@ def main():
             cohort_filter = st.selectbox("Cohort", cohort_options)
         with col2:
             sort_options = ["Priority (Flagged first)", "Name (A-Z)", "Name (Z-A)", "Last Check-in (oldest first)", "Last Check-in (newest first)", "End Date (soonest first)", "End Date (latest first)", "Cohort (newest first)", "Cohort (oldest first)"]
-            sort_by = st.selectbox("Sort by", sort_options)
+            sort_by = st.selectbox("Sort by", sort_options, index=sort_options.index("Cohort (newest first)"))
 
     # Apply filters
     filtered_fellows = fellows.copy()
