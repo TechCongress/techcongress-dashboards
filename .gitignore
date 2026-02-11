@@ -23,3 +23,6 @@ env/
 # Old React files (can remove after cleanup)
 node_modules/
 dist/
+
+# Prototypes
+alumni-prototype.jsx
