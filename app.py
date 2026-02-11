@@ -29,6 +29,9 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
 
+        col_a, col_b, col_c = st.columns([1, 2, 1])
+        with col_b:
+            st.image("TechCongress Logo (black).png", use_container_width=True)
         st.markdown("<h1 style='text-align: center; color: #1f2937;'>TechCongress Fellows Dashboard</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #6b7280;'>Please log in to continue</p>", unsafe_allow_html=True)
 
@@ -949,6 +952,7 @@ st.markdown("""
 
 def main():
     # Header
+    st.image("TechCongress Logo (black).png", width=200)
     col1, col2 = st.columns([4, 1])
     with col1:
         st.title("TechCongress Fellows Dashboard")
