@@ -989,7 +989,7 @@ def main():
     on_track = len([f for f in fellows if f["status"] in ["on-track", "Active"]])
     flagged = len([f for f in fellows if f["status"] in ["flagged", "Flagged"]])
     ending_soon = len([f for f in fellows if f["status"] in ["ending-soon", "Ending Soon"]])
-    needs_checkin = len([f for f in fellows if calculate_days_since(f["last_check_in"]) > 210 and f["status"] in ["on-track", "Active"]])
+    needs_checkin = len([f for f in fellows if calculate_days_since(f["last_check_in"]) > 210 and f["status"] in ["on-track", "Active"] and "AI Security" not in (f.get("fellow_type") or "")])
 
     # Stats row
     st.markdown("---")
@@ -1102,7 +1102,8 @@ def main():
 def show_fellow_card(fellow):
     """Display a fellow card (collapsed view only - modal handles expanded view)"""
     days_since_checkin = calculate_days_since(fellow["last_check_in"])
-    needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"]
+    is_aisf = "AI Security" in (fellow.get("fellow_type") or "")
+    needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"] and not is_aisf
 
     # Status badge colors
     status_colors = {
@@ -1187,7 +1188,8 @@ def show_fellow_card(fellow):
 def show_fellow_modal(fellow):
     """Display fellow details in a modal dialog"""
     days_since_checkin = calculate_days_since(fellow["last_check_in"])
-    needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"]
+    is_aisf = "AI Security" in (fellow.get("fellow_type") or "")
+    needs_checkin = days_since_checkin > 210 and fellow["status"] in ["on-track", "Active"] and not is_aisf
 
     # Status badge colors
     status_colors = {
