@@ -1018,7 +1018,7 @@ def main():
             status_options = ["All Statuses", "Active", "Flagged", "Ending Soon"]
             status_filter = st.selectbox("Status", status_options)
         with col3:
-            fellow_type_options = ["All Types", "Senior Congressional Innovation Fellow", "Congressional Innovation Fellow"]
+            fellow_type_options = ["All Types", "Senior Congressional Innovation Fellow", "Congressional Innovation Fellow", "AI Safety Fellow"]
             fellow_type_filter = st.selectbox("Fellow Type", fellow_type_options)
         with col4:
             party_options = ["All Parties", "Democrat", "Republican", "Independent"]
@@ -1121,9 +1121,18 @@ def show_fellow_card(fellow):
     type_bg = ""
     type_text = "#ffffff"
     if fellow["fellow_type"]:
-        type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
-        type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#93c5fd"
-        type_text = "#ffffff" if "Senior" in fellow["fellow_type"] else "#1e40af"
+        if "Senior" in fellow["fellow_type"]:
+            type_label = "Senior CIF"
+            type_bg = "#6366f1"
+            type_text = "#ffffff"
+        elif "AI Safety" in fellow["fellow_type"]:
+            type_label = "AI Safety"
+            type_bg = "#0891b2"
+            type_text = "#ffffff"
+        else:
+            type_label = "CIF"
+            type_bg = "#93c5fd"
+            type_text = "#1e40af"
 
     # Build badge HTML
     checkin_badge = ""
@@ -1197,9 +1206,18 @@ def show_fellow_modal(fellow):
     type_bg = ""
     type_text = "#ffffff"
     if fellow["fellow_type"]:
-        type_label = "Senior CIF" if "Senior" in fellow["fellow_type"] else "CIF"
-        type_bg = "#6366f1" if "Senior" in fellow["fellow_type"] else "#93c5fd"
-        type_text = "#ffffff" if "Senior" in fellow["fellow_type"] else "#1e40af"
+        if "Senior" in fellow["fellow_type"]:
+            type_label = "Senior CIF"
+            type_bg = "#6366f1"
+            type_text = "#ffffff"
+        elif "AI Safety" in fellow["fellow_type"]:
+            type_label = "AI Safety"
+            type_bg = "#0891b2"
+            type_text = "#ffffff"
+        else:
+            type_label = "CIF"
+            type_bg = "#93c5fd"
+            type_text = "#1e40af"
 
     # Build badge HTML
     checkin_badge = ""
@@ -1457,10 +1475,11 @@ def show_fellow_form():
             linkedin = st.text_input("LinkedIn URL", value=fellow.get("linkedin", ""))
 
         with col2:
+            fellow_type_options_edit = ["", "Congressional Innovation Fellow", "Senior Congressional Innovation Fellow", "AI Safety Fellow"]
             fellow_type = st.selectbox(
                 "Fellow Type",
-                ["", "Congressional Innovation Fellow", "Senior Congressional Innovation Fellow"],
-                index=["", "Congressional Innovation Fellow", "Senior Congressional Innovation Fellow"].index(fellow.get("fellow_type", "")) if fellow.get("fellow_type", "") in ["", "Congressional Innovation Fellow", "Senior Congressional Innovation Fellow"] else 0
+                fellow_type_options_edit,
+                index=fellow_type_options_edit.index(fellow.get("fellow_type", "")) if fellow.get("fellow_type", "") in fellow_type_options_edit else 0
             )
             party = st.selectbox(
                 "Party",
