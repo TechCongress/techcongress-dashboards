@@ -65,8 +65,8 @@ const sampleAlumni = [
     notes: "Background in civic tech and open source."
   },
   {
-    id: 8, name: "Raj Mehta", cohort: "2025", fellowType: "AI Safety Fellow",
-    officeServed: "Sen. Chuck Schumer (D-NY)", chamber: "Senate", party: "Democrat",
+    id: 8, name: "Raj Mehta", cohort: "", fellowType: "AI Security Fellow",
+    officeServed: "National Institute of Standards and Technology", chamber: "Executive Branch", party: "",
     currentRole: "Research Scientist", currentOrg: "Center for AI Safety", sector: "Nonprofit",
     location: "San Francisco, CA", email: "raj.mehta@email.com", phone: "(415) 555-0312",
     linkedin: "https://linkedin.com/in/rajmehta", lastEngaged: "2026-02-05",
@@ -80,7 +80,7 @@ const sampleFellows = [
   { id: 102, name: "Taylor Brooks", cohort: "2026", status: "Flagged", fellowType: "Senior Congressional Innovation Fellow", office: "Rep. Mike Gallagher (R-WI)", chamber: "House", party: "Republican", lastCheckin: "2025-12-10", endDate: "2027-01-15", needsCheckin: true },
   { id: 103, name: "Jamie Okafor", cohort: "2025", status: "Ending Soon", fellowType: "Congressional Innovation Fellow", office: "Sen. Chris Coons (D-DE)", chamber: "Senate", party: "Democrat", lastCheckin: "2026-01-28", endDate: "2026-03-15", needsCheckin: false },
   { id: 104, name: "Riley Patel", cohort: "2026", status: "Active", fellowType: "Congressional Innovation Fellow", office: "Rep. Suzan DelBene (D-WA)", chamber: "House", party: "Democrat", lastCheckin: "2026-02-05", endDate: "2027-01-15", needsCheckin: false },
-  { id: 105, name: "Nadia Williams", cohort: "2026", status: "Active", fellowType: "AI Safety Fellow", office: "Sen. Martin Heinrich (D-NM)", chamber: "Senate", party: "Democrat", lastCheckin: "2026-01-30", endDate: "2027-01-15", needsCheckin: false },
+  { id: 105, name: "Nadia Williams", cohort: "", status: "Active", fellowType: "AI Security Fellow", office: "CISA", chamber: "Executive Branch", party: "", lastCheckin: "2026-01-30", endDate: "2027-01-15", needsCheckin: false },
 ];
 
 const partyColor = { Democrat: "#2563EB", Republican: "#DC2626", Independent: "#7C3AED" };
@@ -239,7 +239,7 @@ export default function App() {
                   </p>
                   <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap", alignItems: "center" }}>
                     <span style={{ fontSize: "12px", color: "#6B7280", background: "#F3F4F6", padding: "2px 8px", borderRadius: "4px" }}>Cohort {alum.cohort}</span>
-                    <span style={{ fontSize: "12px", color: "#6B7280", background: "#F3F4F6", padding: "2px 8px", borderRadius: "4px" }}>{alum.fellowType.replace("Congressional Innovation ", "").replace("Congressional Digital Service ", "").replace("AI Safety ", "AI Safety ")}</span>
+                    <span style={{ fontSize: "12px", color: "#6B7280", background: "#F3F4F6", padding: "2px 8px", borderRadius: "4px" }}>{alum.fellowType.replace("Congressional Innovation ", "").replace("Congressional Digital Service ", "").replace("AI Security ", "AI Security ")}</span>
                     <span style={{ fontSize: "12px", fontWeight: 600, color: partyColor[alum.party] }}>{alum.party.charAt(0)}</span>
                     <span style={{ fontSize: "12px", color: "#6B7280" }}>{alum.chamber}</span>
                   </div>

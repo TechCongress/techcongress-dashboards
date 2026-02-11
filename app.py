@@ -1018,7 +1018,7 @@ def main():
             status_options = ["All Statuses", "Active", "Flagged", "Ending Soon"]
             status_filter = st.selectbox("Status", status_options)
         with col3:
-            fellow_type_options = ["All Types", "Senior Congressional Innovation Fellow", "Congressional Innovation Fellow", "AI Safety Fellow"]
+            fellow_type_options = ["All Types", "Senior Congressional Innovation Fellow", "Congressional Innovation Fellow", "AI Security Fellow"]
             fellow_type_filter = st.selectbox("Fellow Type", fellow_type_options)
         with col4:
             party_options = ["All Parties", "Democrat", "Republican", "Independent"]
@@ -1125,8 +1125,8 @@ def show_fellow_card(fellow):
             type_label = "Senior CIF"
             type_bg = "#6366f1"
             type_text = "#ffffff"
-        elif "AI Safety" in fellow["fellow_type"]:
-            type_label = "AI Safety"
+        elif "AI Security" in fellow["fellow_type"]:
+            type_label = "AISF"
             type_bg = "#0891b2"
             type_text = "#ffffff"
         else:
@@ -1210,8 +1210,8 @@ def show_fellow_modal(fellow):
             type_label = "Senior CIF"
             type_bg = "#6366f1"
             type_text = "#ffffff"
-        elif "AI Safety" in fellow["fellow_type"]:
-            type_label = "AI Safety"
+        elif "AI Security" in fellow["fellow_type"]:
+            type_label = "AISF"
             type_bg = "#0891b2"
             type_text = "#ffffff"
         else:
@@ -1475,7 +1475,7 @@ def show_fellow_form():
             linkedin = st.text_input("LinkedIn URL", value=fellow.get("linkedin", ""))
 
         with col2:
-            fellow_type_options_edit = ["", "Congressional Innovation Fellow", "Senior Congressional Innovation Fellow", "AI Safety Fellow"]
+            fellow_type_options_edit = ["", "Congressional Innovation Fellow", "Senior Congressional Innovation Fellow", "AI Security Fellow"]
             fellow_type = st.selectbox(
                 "Fellow Type",
                 fellow_type_options_edit,
