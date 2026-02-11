@@ -1153,7 +1153,7 @@ def show_fellow_card(fellow):
         elif fellow["party"] == "Independent":
             party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#8b5cf6;color:#ffffff;">I</span>'
     elif is_aisf:
-        party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#475569;color:#ffffff;">Executive Branch</span>'
+        party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#94a3b8;color:#ffffff;">Executive Branch</span>'
 
     # CARD VIEW
     office_html = ""
@@ -1241,7 +1241,7 @@ def show_fellow_modal(fellow):
         elif fellow["party"] == "Independent":
             party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#8b5cf6;color:#ffffff;">I</span>'
     elif is_aisf:
-        party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#475569;color:#ffffff;">Executive Branch</span>'
+        party_html = '<span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background-color:#94a3b8;color:#ffffff;">Executive Branch</span>'
 
     # Modal header
     st.markdown(f"## {fellow['name']}")
