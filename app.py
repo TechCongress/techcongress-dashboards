@@ -29,7 +29,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
 
-        col_a, col_b, col_c = st.columns([1, 2, 1])
+        col_a, col_b, col_c = st.columns([2, 1, 2])
         with col_b:
             st.image("TechCongress Logo (black).png", use_container_width=True)
         st.markdown("<h1 style='text-align: center; color: #1f2937;'>TechCongress Fellows Dashboard</h1>", unsafe_allow_html=True)
