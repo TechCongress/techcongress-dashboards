@@ -793,6 +793,14 @@ def show_alumni_modal(alumni):
         elif aisf:
             st.markdown("**Branch:** Executive Branch")
 
+        st.markdown("### Background")
+        if alumni.get("prior_role"):
+            st.markdown(f"**Prior Role:** {alumni['prior_role']}")
+        if alumni.get("education"):
+            st.markdown(f"**Education:** {alumni['education']}")
+        if not alumni.get("prior_role") and not alumni.get("education"):
+            st.caption("No background info")
+
     with col2:
         st.markdown("### Current Info")
         if alumni.get("current_role"):
@@ -888,6 +896,9 @@ def show_alumni_form():
             current_role = st.text_input("Current Role", value=alumni.get("current_role", ""))
             current_org = st.text_input("Current Organization", value=alumni.get("current_org", ""))
 
+        prior_role = st.text_input("Prior Role", value=alumni.get("prior_role", ""), placeholder="Role before becoming a fellow")
+        education = st.text_input("Education", value=alumni.get("education", ""), placeholder="e.g., PhD Computer Science, Stanford")
+
         col1, col2 = st.columns(2)
         with col1:
             sector_options = ["", "Government", "Nonprofit", "Academia", "Private", "Policy/Think Tank"]
@@ -943,7 +954,9 @@ def show_alumni_form():
                     "linkedin": linkedin,
                     "last_engaged": last_engaged.strftime("%Y-%m-%d") if last_engaged else "",
                     "engagement_notes": engagement_notes,
-                    "notes": notes
+                    "notes": notes,
+                    "prior_role": prior_role,
+                    "education": education
                 }
 
                 if is_editing:

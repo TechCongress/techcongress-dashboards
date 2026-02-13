@@ -1,9 +1,10 @@
 # TechCongress Fellows Dashboard
 
-A Streamlit-based dashboard for managing and monitoring TechCongress fellow placements, connected to Airtable as the backend database.
+A Streamlit-based dashboard for managing and monitoring TechCongress fellow placements and alumni, connected to Airtable as the backend database.
 
 ## Features
 
+### Current Fellows
 - **Fellow Management** — Add, edit, and view fellow profiles with a modal popup interface
 - **Status Tracking** — Monitor Active, Flagged, and Ending Soon fellows
 - **Check-in History** — Log and track all fellow check-ins over time
@@ -11,7 +12,17 @@ A Streamlit-based dashboard for managing and monitoring TechCongress fellow plac
 - **Filtering & Sorting** — Filter by search term, status, fellow type, party, chamber, and cohort; sort by various criteria (default: Cohort, newest first)
 - **Fellow Types** — Supports Congressional Innovation Fellows (CIF), Senior Congressional Innovation Fellows, and AI Security Fellows (AISF)
 - **AI Security Fellow Handling** — AISF fellows display an "Executive Branch" tag instead of party affiliation and are excluded from check-in requirements
-- **Secure Access** — Password-protected login with TechCongress branding
+
+### Alumni Network
+- **Alumni Management** — Add, edit, and view alumni profiles with career and engagement tracking
+- **Multi-Select Fellow Types** — Alumni can have multiple fellowship designations (CIF, Senior CIF, Congressional Innovation Scholar, Congressional Digital Service Fellow, AI Security Fellow)
+- **Sector Tracking** — Track alumni across Government, Nonprofit, Academia, Private, and Policy/Think Tank sectors
+- **Engagement Tracking** — Record last engaged date and engagement notes for each alum
+- **Filtering & Sorting** — Filter by search term, fellow type, sector, party, chamber, and cohort; sort by cohort, name, last engaged, organization, or sector
+
+### General
+- **Multi-Page Navigation** — Toggle between Current Fellows and Alumni from the sidebar
+- **Secure Access** — Password-protected login with TechCongress branding and forced light mode styling
 
 ## Monthly Status Reports
 
@@ -78,7 +89,11 @@ To deploy your own instance:
 
 ```
 techcongress-dashboards/
-├── app.py                          # Main application (login + dashboard)
+├── app.py                          # Login page + multi-page navigation
+├── helpers.py                      # Shared Airtable config and CRUD functions
+├── pages/
+│   ├── current-fellows-page.py     # Current fellows dashboard
+│   └── alumni-page.py              # Alumni network dashboard
 ├── requirements.txt                # Python dependencies
 ├── TechCongress Logo (black).png   # Logo displayed on login and dashboard
 ├── .streamlit/
@@ -89,7 +104,7 @@ techcongress-dashboards/
 
 ## Airtable Setup
 
-The dashboard connects to three Airtable tables:
+The dashboard connects to four Airtable tables:
 
 ### Fellows Table
 | Field | Type | Description |
@@ -132,18 +147,41 @@ The dashboard connects to three Airtable tables:
 | Date Submitted | Date | Submission date |
 | Notes | Long text | Additional notes |
 
+### Alumni Table
+| Field | Type | Description |
+|-------|------|-------------|
+| Name | Single line text | Alumni's full name |
+| Email | Email | Contact email |
+| Phone Number | Phone | Contact phone |
+| Cohort | Single line text | Cohort year (e.g., "2020") |
+| Fellow Type | Multi-select | CIF, Senior CIF, Congressional Innovation Scholar, Congressional Digital Service Fellow, AI Security Fellow |
+| Office Served | Single line text | Office or agency served during fellowship |
+| Chamber | Single select | Senate, House, or Executive Branch |
+| Party | Single select | Democrat, Republican, or Independent |
+| Current Role | Single line text | Current job title |
+| Current Organization | Single line text | Current employer |
+| Sector | Single select | Government, Nonprofit, Academia, Private, or Policy/Think Tank |
+| Location | Single line text | Current location |
+| LinkedIn | URL | LinkedIn profile link |
+| Last Engaged | Date | Most recent engagement with TechCongress |
+| Engagement Notes | Long text | Details on engagement interactions |
+| Notes | Long text | General notes |
+
 ## Fellow Types
 
-The dashboard supports three fellow types, each with distinct badge styling:
-
+### Current Fellows
 - **Congressional Innovation Fellow (CIF)** — Standard fellows placed in congressional offices
 - **Senior Congressional Innovation Fellow (Senior CIF)** — Senior fellows with extended placements
 - **AI Security Fellow (AISF)** — Fellows placed in executive branch agencies; displayed with an "Executive Branch" tag instead of party affiliation and excluded from periodic check-in requirements
 
+### Alumni-Only Designations
+- **Congressional Innovation Scholar (CIS)** — Historical designation for some earlier fellows
+- **Congressional Digital Service Fellow (CDSF)** — Digital service fellowship designation
+
 ## UI Overview
 
-- **Login Page** — Password-protected login with centered TechCongress logo
-- **Dashboard View** — Card-based grid showing all fellows with key info and status badges
-- **Modal Popup** — Click "View" to open a detailed modal with contact info, placement details, check-in history, and status reports
-- **Filters** — Filter by search term, status, fellow type, party, chamber, and cohort
-- **Sorting** — Sort by priority, name, last check-in, end date, or cohort (default: newest first)
+- **Login Page** — Password-protected login with centered TechCongress logo and forced light mode
+- **Current Fellows Dashboard** — Card-based grid showing all fellows with status badges, check-in tracking, and monthly report management
+- **Alumni Dashboard** — Card-based grid showing alumni with sector tags, current role/organization, engagement tracking, and multi-select fellow type badges
+- **Modal Popups** — Click "View" on any card to open detailed information with contact info, history, and notes
+- **Sidebar Navigation** — Toggle between Current Fellows and Alumni pages

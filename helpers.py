@@ -482,7 +482,9 @@ def fetch_alumni():
                 "linkedin": fields.get("LinkedIn", ""),
                 "last_engaged": fields.get("Last Engaged", ""),
                 "engagement_notes": fields.get("Engagement Notes", ""),
-                "notes": fields.get("Notes", "")
+                "notes": fields.get("Notes", ""),
+                "prior_role": fields.get("Prior Role", ""),
+                "education": fields.get("Education", "")
             })
 
         offset = data.get("offset")
@@ -516,7 +518,9 @@ def create_alumni(alumni_data):
         "LinkedIn": alumni_data.get("linkedin"),
         "Last Engaged": alumni_data.get("last_engaged"),
         "Engagement Notes": alumni_data.get("engagement_notes"),
-        "Notes": alumni_data.get("notes")
+        "Notes": alumni_data.get("notes"),
+        "Prior Role": alumni_data.get("prior_role"),
+        "Education": alumni_data.get("education")
     }
 
     # Remove empty fields (but keep Fellow Type even if empty list)
@@ -552,7 +556,9 @@ def update_alumni(record_id, alumni_data):
         "LinkedIn": alumni_data.get("linkedin"),
         "Last Engaged": alumni_data.get("last_engaged"),
         "Engagement Notes": alumni_data.get("engagement_notes"),
-        "Notes": alumni_data.get("notes")
+        "Notes": alumni_data.get("notes"),
+        "Prior Role": alumni_data.get("prior_role"),
+        "Education": alumni_data.get("education")
     }
 
     # Remove empty fields (but keep Fellow Type even if empty list)
