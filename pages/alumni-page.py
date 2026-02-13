@@ -697,7 +697,7 @@ def show_alumni_card(alumni):
     # Office served
     office_html = ""
     if alumni.get("office_served"):
-        office_html = f'<div style="color:#6b7280;font-size:0.8rem;margin-bottom:0.25rem;">Served in: {alumni["office_served"]}</div>'
+        office_html = f'<div style="color:#6b7280;font-size:0.8rem;margin-bottom:0.25rem;">Served: {alumni["office_served"]}</div>'
 
     # Location
     location_html = ""
