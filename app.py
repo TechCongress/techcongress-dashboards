@@ -12,6 +12,94 @@ def login_page():
     """Display login form."""
     st.markdown("""
     <style>
+        .stApp {
+            background-color: #f8fafc;
+        }
+        [data-testid="stAppViewContainer"] {
+            background-color: #f8fafc;
+        }
+        [data-testid="stHeader"] {
+            background-color: #f8fafc;
+        }
+        [data-testid="stAppViewContainer"],
+        [data-testid="stApp"],
+        .main,
+        .block-container {
+            background-color: #f8fafc !important;
+            color: #1f2937 !important;
+        }
+        h1, h2, h3, p, span, label {
+            color: #1f2937 !important;
+        }
+        input, textarea, select,
+        [data-baseweb="input"],
+        [data-baseweb="input"] input {
+            background-color: white !important;
+            color: #1f2937 !important;
+        }
+        .stSelectbox label, .stTextInput label {
+            color: #1f2937 !important;
+        }
+        input::placeholder,
+        textarea::placeholder {
+            color: #9ca3af !important;
+        }
+        .stButton button,
+        .stFormSubmitButton button,
+        [data-testid="stFormSubmitButton"] button {
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+        }
+        .stButton button:hover,
+        .stFormSubmitButton button:hover,
+        [data-testid="stFormSubmitButton"] button:hover {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+        .stFormSubmitButton button p,
+        [data-testid="stFormSubmitButton"] button p,
+        .stFormSubmitButton button span,
+        [data-testid="stFormSubmitButton"] button span {
+            color: #ffffff !important;
+        }
+        /* Password visibility toggle */
+        [data-testid="stTextInput"] button,
+        [data-testid="stTextInput"] button svg {
+            color: #6b7280 !important;
+            stroke: #6b7280 !important;
+            background-color: transparent !important;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #ffffff !important;
+        }
+        [data-testid="stSidebar"] * {
+            color: #1f2937 !important;
+        }
+        [data-testid="stSidebarContent"] {
+            background-color: #ffffff !important;
+        }
+        [data-testid="stToolbar"],
+        [data-testid="stToolbar"] button,
+        header[data-testid="stHeader"] {
+            background-color: #f8fafc !important;
+            color: #1f2937 !important;
+        }
+        [data-testid="stToolbar"] svg,
+        header[data-testid="stHeader"] svg {
+            color: #1f2937 !important;
+            stroke: #1f2937 !important;
+            fill: #1f2937 !important;
+        }
+        [data-testid="stMainMenu"],
+        [data-testid="stMainMenu"] button {
+            color: #1f2937 !important;
+        }
+        [data-testid="stMainMenu"] svg {
+            color: #1f2937 !important;
+            stroke: #1f2937 !important;
+        }
         .login-container {
             max-width: 400px;
             margin: 100px auto;
