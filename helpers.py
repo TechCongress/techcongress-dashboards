@@ -8,6 +8,7 @@ AIRTABLE_BASE_ID = st.secrets["airtable"]["base_id"]
 AIRTABLE_TABLE_NAME = st.secrets["airtable"]["table_name"]
 CHECKINS_TABLE_NAME = "Check-ins"
 STATUS_REPORTS_TABLE_NAME = "Status Reports"
+ALUMNI_TABLE_NAME = "Alumni"
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1cUr9l0mmdXkGqy0grAbR4GieNES5-hnRQiNkjnFg19U/edit?usp=sharing"
 
 # ============ HELPER FUNCTIONS ============
@@ -434,3 +435,130 @@ def calculate_days_until(date_str):
         return (date - datetime.now()).days
     except:
         return 999
+
+
+# ============ ALUMNI FUNCTIONS ============
+
+def fetch_alumni():
+    """Fetch all alumni from Airtable"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{ALUMNI_TABLE_NAME}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    all_records = []
+    offset = None
+
+    while True:
+        params = {}
+        if offset:
+            params["offset"] = offset
+
+        response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code != 200:
+            st.error(f"Failed to fetch alumni data: {response.status_code}")
+            return []
+
+        data = response.json()
+
+        for record in data.get("records", []):
+            fields = record.get("fields", {})
+            all_records.append({
+                "id": record["id"],
+                "name": fields.get("Name", ""),
+                "email": fields.get("Email", ""),
+                "phone": fields.get("Phone Number", ""),
+                "cohort": fields.get("Cohort", ""),
+                "fellow_types": fields.get("Fellow Type", []),
+                "office_served": fields.get("Office Served", ""),
+                "chamber": fields.get("Chamber", ""),
+                "party": fields.get("Party", ""),
+                "current_role": fields.get("Current Role", ""),
+                "current_org": fields.get("Current Organization", ""),
+                "sector": fields.get("Sector", ""),
+                "location": fields.get("Location", ""),
+                "linkedin": fields.get("LinkedIn", ""),
+                "last_engaged": fields.get("Last Engaged", ""),
+                "engagement_notes": fields.get("Engagement Notes", ""),
+                "notes": fields.get("Notes", "")
+            })
+
+        offset = data.get("offset")
+        if not offset:
+            break
+
+    return all_records
+
+
+def create_alumni(alumni_data):
+    """Create a new alumni record in Airtable"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{ALUMNI_TABLE_NAME}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    fields = {
+        "Name": alumni_data.get("name"),
+        "Email": alumni_data.get("email"),
+        "Phone Number": alumni_data.get("phone"),
+        "Cohort": alumni_data.get("cohort"),
+        "Fellow Type": alumni_data.get("fellow_types", []),
+        "Office Served": alumni_data.get("office_served"),
+        "Chamber": alumni_data.get("chamber"),
+        "Party": alumni_data.get("party"),
+        "Current Role": alumni_data.get("current_role"),
+        "Current Organization": alumni_data.get("current_org"),
+        "Sector": alumni_data.get("sector"),
+        "Location": alumni_data.get("location"),
+        "LinkedIn": alumni_data.get("linkedin"),
+        "Last Engaged": alumni_data.get("last_engaged"),
+        "Engagement Notes": alumni_data.get("engagement_notes"),
+        "Notes": alumni_data.get("notes")
+    }
+
+    # Remove empty fields (but keep Fellow Type even if empty list)
+    fields = {k: v for k, v in fields.items() if v or k == "Fellow Type"}
+
+    response = requests.post(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Airtable error {response.status_code}: {response.text}")
+    return response.status_code == 200
+
+
+def update_alumni(record_id, alumni_data):
+    """Update an existing alumni record in Airtable"""
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{ALUMNI_TABLE_NAME}/{record_id}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    fields = {
+        "Name": alumni_data.get("name"),
+        "Email": alumni_data.get("email"),
+        "Phone Number": alumni_data.get("phone"),
+        "Cohort": alumni_data.get("cohort"),
+        "Fellow Type": alumni_data.get("fellow_types", []),
+        "Office Served": alumni_data.get("office_served"),
+        "Chamber": alumni_data.get("chamber"),
+        "Party": alumni_data.get("party"),
+        "Current Role": alumni_data.get("current_role"),
+        "Current Organization": alumni_data.get("current_org"),
+        "Sector": alumni_data.get("sector"),
+        "Location": alumni_data.get("location"),
+        "LinkedIn": alumni_data.get("linkedin"),
+        "Last Engaged": alumni_data.get("last_engaged"),
+        "Engagement Notes": alumni_data.get("engagement_notes"),
+        "Notes": alumni_data.get("notes")
+    }
+
+    # Remove empty fields (but keep Fellow Type even if empty list)
+    fields = {k: v for k, v in fields.items() if v or k == "Fellow Type"}
+
+    response = requests.patch(url, headers=headers, json={"fields": fields})
+    if response.status_code != 200:
+        st.error(f"Airtable error {response.status_code}: {response.text}")
+    return response.status_code == 200
